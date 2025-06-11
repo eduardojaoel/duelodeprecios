@@ -149,10 +149,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const soundPaths = {
-    charging: "../audios/sfx-charging.mp3",
-    correct: "../audios/sfx-correct.mp3",
-    incorrect: "../audios/sfx-incorrect.mp3",
-    beep: "../audios/sfx-scanner-beep.mp3",
+    charging: "audios/sfx-charging.mp3",
+    correct: "audios/sfx-correct.mp3",
+    incorrect: "audios/sfx-incorrect.mp3",
+    beep: "audios/sfx-scanner-beep.mp3",
   };
 
   // 2. Crear los objetos de audio
