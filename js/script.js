@@ -22,6 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   const playAgainButton = document.getElementById("play-again-button");
 
+  const hostUrl = "https://eduardojaoel.github.io/duelodeprecios/";
+
   const sfxScannerBeep = document.getElementById("sfx-scanner-beep");
   const sfxCharging = document.getElementById("sfx-charging");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -157,10 +159,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 2. Crear los objetos de audio
   const sounds = {
-    charging: new Audio(soundPaths.charging),
-    correct: new Audio(soundPaths.correct),
-    incorrect: new Audio(soundPaths.incorrect),
-    beep: new Audio(soundPaths.beep),
+    charging: new Audio(hostUrl + soundPaths.charging),
+    correct: new Audio(hostUrl + soundPaths.correct),
+    incorrect: new Audio(hostUrl + soundPaths.incorrect),
+    beep: new Audio(hostUrl + soundPaths.beep),
   };
 
   // 3. ¡Este es el paso clave! Precargar todo.
