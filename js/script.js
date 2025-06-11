@@ -198,7 +198,6 @@ document.addEventListener("DOMContentLoaded", () => {
      * @param {function} onReadyCallback - La función a llamar cuando todo esté cargado.
      */
     async loadAllSounds(soundPaths, hostUrl, onReadyCallback) {
-      console.log("🚀 Iniciando carga robusta de sonidos...");
       const loadPromises = [];
       for (const name in soundPaths) {
         const url = hostUrl + soundPaths[name];
@@ -208,9 +207,6 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         await Promise.all(loadPromises);
         this.isReady = true;
-        console.log(
-          "✅ Motor de audio listo. Todos los sonidos decodificados y en memoria."
-        );
         if (onReadyCallback) {
           onReadyCallback();
         }
@@ -267,12 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const audio = new AudioEngine();
 
   // 3. Cargar todos los sonidos y definir qué hacer cuando estén listos.
-  audio.loadAllSounds(soundPaths, hostUrl, () => {
-    // Esta función se ejecuta cuando todo está listo.
-    // Aquí puedes habilitar la interfaz de usuario.
-    console.log("La aplicación está lista para usarse.");
-    document.getElementById("miBotonDeJuego").disabled = false;
-  });
+  audio.loadAllSounds(soundPaths, hostUrl);
 
   // --- 5. Funciones de Actualización de UI ---
   function addProductToArena(product, role, showPrice) {
@@ -354,8 +345,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (allProducts.length < 2) {
         throw new Error("No hay suficientes productos para iniciar el juego.");
       }
-      console.log(`Cargados ${allProducts.length} productos.`);
-
       setupFirstRound();
 
       setTimeout(() => {
@@ -364,7 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
         playButton.disabled = false;
         playButton.classList.remove("is-disabled");
         playButton.innerHTML = `<span>Empezar</span> <svg width="17" height="21" viewBox="0 0 17 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.729 20.5728H0.729004V0.572754H4.729V3.07275H8.729V6.82275H12.729V9.32275H16.729V11.8228H12.729V14.3228H8.729V18.0728H4.729V20.5728Z" fill="#023A50"/></svg>`;
-        console.log("¡Datos listos para el juego!");
       }, 500);
     } catch (error) {
       console.error("Error fatal al cargar los datos del juego:", error);
@@ -432,7 +420,6 @@ document.addEventListener("DOMContentLoaded", () => {
       );
     }
     let validated = false;
-    console.log(guess);
 
     const initialValueNum = parseFloat(initialNumber);
     const finalValueNum = parseFloat(finalNumber);
@@ -554,11 +541,6 @@ document.addEventListener("DOMContentLoaded", () => {
               .classList.add("icon-fade-out");
           }, 1500);
         }
-        console.log(
-          `Animation completed in approximately ${
-            animationDuration / 1000
-          } seconds.`
-        );
       }
     }
 
@@ -668,12 +650,10 @@ document.addEventListener("DOMContentLoaded", () => {
     gameArenaHeight = 0;
 
     productsInView.forEach((productInView) => {
-      console.log("productInViewHeight: ", productInView.offsetHeight);
       gameArenaHeight += productInView.offsetHeight;
     });
 
     gameArena.style.height = `calc(${gameArenaHeight}px + 10px) `;
-    console.log("La altura del contenedor debería ser: ", gameArenaHeight);
   }
   function setGameArenaTranslate() {
     let outOfViewHeight = 0;
