@@ -116,7 +116,7 @@ body {
   width: 100%;
   height: 100vh; /* Fallback para navegadores más antiguos */
   height: 100dvh; /* Altura dinámica del viewport, ideal para móviles */
-  background-image: url("assets/background.jpg");
+  background-image: url("../assets/background.jpg");
   background-size: cover; /* Asegura que la imagen cubra todo el espacio, manteniendo la proporción */
   background-position: center center; /* Centra la imagen */
   background-repeat: no-repeat; /* Evita que la imagen se repita */
@@ -545,7 +545,7 @@ body {
   --scale: 1.8;
   width: calc(var(--frame-width) * var(--scale) * 1px);
   height: calc(var(--frame-height) * var(--scale) * 1px);
-  background: url("assets/flamme-green.png") no-repeat;
+  background: url("../assets/flamme-green.png") no-repeat;
   background-size: calc(var(--frame-width) * var(--frames) * var(--scale) * 1px)
     calc(var(--frame-height) * var(--scale) * 1px);
   image-rendering: pixelated;
