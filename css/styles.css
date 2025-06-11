@@ -1,0 +1,572 @@
+:root {
+  --font-body: "IBM Plex Mono", ui-monospace, monospace;
+  --font-8: "Pixel Operator 8", ui-monospace, monospace;
+  --font-8-bold: "Pixel Operator 8 Bold", ui-monospace, monospace;
+  --font-mono-8: "Pixel Operator Mono 8", ui-monospace, monospace;
+  --font-mono-hb-8: "Pixel Operator Mono HB 8", ui-monospace, monospace;
+
+  --color-background: #012533;
+  --color-darkest-background: #000405;
+  --color-foreground: #fff;
+  --color-accent: #e8ff6c;
+  --color-subbed: #cdcdcd;
+  --color-extra-subbed: #adadad;
+}
+body {
+  font-family: var(--font-body);
+  font-weight: normal;
+  font-size: 14px;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+}
+.visually-hidden {
+  display: none;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.section-width {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+.narrow-section-width {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding-left: 60px;
+  padding-right: 60px;
+}
+.header {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  padding-top: 20px;
+  padding-bottom: 15px;
+  position: relative;
+  height: 85px;
+}
+.logo {
+  display: inline-block;
+  width: 130px;
+  height: auto;
+  position: absolute;
+  left: 85px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 11;
+  transition-property: top, left, width;
+  transition-duration: 1s;
+  transition-timing-function: cubic-bezier(0.48, 0.48, 0, 1);
+}
+.logo.active {
+  top: 120px;
+  left: 50%;
+  width: 240px;
+}
+.score {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.score-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+.score-wrapper svg {
+  flex: 0 0 auto;
+}
+.current-score-wrapper {
+  font-family: var(--font-mono-hb-8);
+  font-size: 16px;
+  color: var(--color-accent);
+  position: relative;
+}
+.high-score-wrapper {
+  font-family: var(--font-mono-8);
+  color: var(--color-subbed);
+}
+.score-wrapper .icon-cart {
+  width: 22px;
+  height: 22px;
+}
+.score-wrapper .icon-trophy {
+  width: 20px;
+  height: 20px;
+}
+.game-container {
+}
+.start-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  width: 100%;
+  height: 100vh; /* Fallback para navegadores más antiguos */
+  height: 100dvh; /* Altura dinámica del viewport, ideal para móviles */
+  background-image: url("/assets/background.jpg");
+  background-size: cover; /* Asegura que la imagen cubra todo el espacio, manteniendo la proporción */
+  background-position: center center; /* Centra la imagen */
+  background-repeat: no-repeat; /* Evita que la imagen se repita */
+  background-color: var(--color-darkest-background);
+  overflow: auto;
+  transition: transform 1s cubic-bezier(0.48, 0.48, 0, 1);
+}
+.start-screen:not(.active) {
+  transform: translateX(-100vw);
+}
+.start-screen-content {
+  margin-top: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+.intro-text {
+  font-family: var(--font-body);
+  color: var(--color-subbed);
+  font-size: 16px;
+  text-align: center;
+}
+.high-score-display {
+  text-align: center;
+  font-family: var(--font-mono-8);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.nes-btn {
+  border-image-slice: 2;
+  border-image-width: 2;
+  border-image-repeat: stretch;
+  border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="5" height="5" xmlns="http://www.w3.org/2000/svg"><path d="M2 1 h1 v1 h-1 z M1 2 h1 v1 h-1 z M3 2 h1 v1 h-1 z M2 3 h1 v1 h-1 z" fill="rgb(166,190,37)" /></svg>');
+  border-image-outset: 2;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px;
+  margin: 4px;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  border-style: solid;
+  border-width: 4px;
+  color: #023a50;
+  background-color: #e8ff6c;
+  font-family: var(--font-mono-hb-8);
+  text-transform: uppercase;
+}
+.nes-btn span {
+  padding-top: 2px;
+}
+@supports (-moz-appearance: meterbar) {
+  .nes-btn {
+    border-image-repeat: stretch;
+  }
+}
+.nes-btn::after {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  bottom: -4px;
+  left: -4px;
+  content: "";
+  box-shadow: inset -4px -4px #cde353;
+}
+.nes-btn:hover {
+  color: #023a50;
+  text-decoration: none;
+  background-color: #e8ff6c;
+}
+.nes-btn:hover::after {
+  box-shadow: inset -6px -6px #cde353;
+}
+.nes-btn:focus {
+  box-shadow: 0 0 0 6px rgba(2, 58, 80, 0.3);
+}
+.nes-btn:active:not(.is-disabled)::after {
+  box-shadow: inset 4px 4px #cde353;
+}
+.nes-btn:focus {
+  outline: 0;
+}
+.nes-btn.is-disabled,
+.nes-btn.is-disabled:focus,
+.nes-btn.is-disabled:hover {
+  color: #023a50;
+  cursor: not-allowed;
+  background-color: #e8ff6c;
+  box-shadow: inset -4px -4px #cde353;
+  opacity: 0.6;
+}
+
+.product-card {
+  background-color: #023a50;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  gap: 20px;
+}
+.product-image {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  max-width: 33.33%;
+  aspect-ratio: 1/1;
+}
+.product-content {
+  flex: 1 1 auto;
+}
+.product-category {
+  font-size: 12px;
+  text-transform: uppercase;
+  background-color: #054f6d;
+  padding: 2px 5px;
+  border: 1px solid #056f99;
+  border-radius: 4px;
+}
+.product-brand {
+  font-size: 16px;
+  text-transform: uppercase;
+}
+.product-title {
+  font-family: var(--font-mono-hb-8);
+  font-size: 14px;
+}
+.product-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.product-measure {
+  font-size: 16px;
+  text-transform: uppercase;
+}
+.product-price {
+  font-family: var(--font-mono-hb-8);
+  font-size: 16px;
+  margin-top: 10px;
+  color: #e8ff6c;
+  transition: color 0.2s ease-in-out;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  position: relative;
+}
+.game-arena {
+  transition: transform 0.4s cubic-bezier(0.48, 0.48, 0, 1),
+    height 0.2s cubic-bezier(0.48, 0.48, 0, 1);
+}
+/* .start-screen {
+  background: transparent;
+} */
+
+.controls-area {
+  z-index: 1;
+  position: relative;
+  margin-top: 15px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.game-arena-wrapper {
+  overflow: hidden;
+}
+
+.rainbow-text-container {
+  text-align: center;
+}
+
+.product-display-container {
+  margin-bottom: 10px;
+}
+.controls-area {
+}
+.price-value {
+  display: inline-block;
+  color: inherit;
+}
+.animate-price-reveal {
+  /* Aplicamos la animación */
+  animation-name: inflar-girar-latir-volver;
+  animation-duration: 2s; /* Duración total de toda la secuencia */
+  animation-timing-function: ease-in-out; /* Suaviza la animación general */
+  animation-iteration-count: 1; /* Se ejecuta una vez */
+  animation-fill-mode: forwards; /* Mantiene el estado del último keyframe (100%) */
+  /* En este caso, el 100% es el estado original */
+  transform-origin: center center; /* Asegura que la escala y rotación sean desde el centro */
+}
+
+/* Definición de la animación completa en etapas */
+@keyframes inflar-girar-latir-volver {
+  /* --- Fase 1: Inflar y Girar Levemente (0% a 50%) --- */
+  0% {
+    transform: scale(1) rotate(0deg);
+    /* Estado original */
+  }
+  10% {
+    transform: scale(1.05) rotate(-4deg); /* Pequeño giro a la izquierda e infla un poco */
+  }
+  20% {
+    transform: scale(1.15) rotate(4deg); /* Giro a la derecha e infla más */
+  }
+  30% {
+    transform: scale(1.25) rotate(-2deg); /* Giro más suave a la izquierda e infla más */
+  }
+  40% {
+    transform: scale(1.35) rotate(2deg); /* Giro más suave a la derecha e infla más */
+  }
+  50% {
+    transform: scale(1.4) rotate(0deg); /* Completamente inflado y centrado */
+  }
+
+  /* --- Fase 2: Heartbeat (50% a 80%) --- */
+  /* El objeto ya está en scale(1.4) y rotate(0deg) desde el 50% */
+  57% {
+    transform: scale(1.5) rotate(0deg); /* Primer pulso - más grande */
+  }
+  64% {
+    transform: scale(1.35) rotate(0deg); /* Primer pulso - ligeramente más pequeño que inflado */
+  }
+  71% {
+    transform: scale(1.5) rotate(0deg); /* Segundo pulso - más grande */
+  }
+  80% {
+    transform: scale(1.4) rotate(0deg); /* Fin del heartbeat, vuelve al tamaño inflado estable */
+  }
+
+  /* --- Fase 3: Volver al estado original (80% a 100%) --- */
+  /* El objeto está en scale(1.4) y rotate(0deg) desde el 80% */
+  100% {
+    transform: scale(1) rotate(0deg); /* Estado original */
+  }
+}
+
+.wrong-guess {
+  color: #ff6c6c;
+}
+.good-guess {
+  color: #81ff6c;
+}
+.validation-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+.icon-fade-in {
+  animation-name: fadeIn; /* Nombre de los keyframes */
+  animation-duration: 0.3s; /* Duración de la animación (ej. 1.3 segundos) */
+  animation-fill-mode: forwards; /* Mantiene el estado final (opacity: 1) después de animar */
+  animation-timing-function: ease-out; /* Hace que el final de la animación sea más suave */
+}
+
+.icon-fade-out {
+  animation-name: fadeOut; /* Nombre de los keyframes */
+  animation-duration: 0.5s; /* Duración de la animación (ej. 1.5 segundos) */
+  animation-fill-mode: forwards; /* Mantiene el estado final (opacity: 1) después de animar */
+  animation-timing-function: ease-out; /* Hace que el final de la animación sea más suave */
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0; /* Comienza completamente transparente */
+  }
+  100% {
+    opacity: 1; /* Termina completamente opaco */
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1; /* Comienza completamente transparente */
+  }
+  100% {
+    opacity: 0; /* Termina completamente opaco */
+  }
+}
+.controls-area .controls-label {
+  grid-column: span 2;
+  font-family: var(--font-8);
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--color-extra-subbed);
+  text-align: center;
+}
+.controls-area .nes-btn {
+  grid-column: span 1;
+  justify-content: center;
+  font-size: 16px;
+}
+.controls-area .nes-btn svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
+@keyframes wave-up {
+  0% {
+    transform: translateY(0); /* Posición inicial */
+  }
+  50% {
+    transform: translateY(
+      -6px
+    ); /* Sube un poco (ajusta -8px según necesites) */
+  }
+  100% {
+    transform: translateY(0); /* Vuelve a la posición inicial */
+  }
+}
+
+.price-value .char {
+  display: inline-block;
+  animation-name: wave-up;
+  animation-duration: 1s; /* Duración de la subida y bajada de un carácter */
+  animation-timing-function: ease-in-out; /* Para un movimiento suave */
+  animation-iteration-count: infinite; /* La animación se ejecuta una vez por carácter */
+  /* Cambia a 'infinite' si quieres que la ola se repita continuamente */
+  animation-fill-mode: forwards; /* Mantiene el estado del último keyframe (translateY(0)) */
+}
+
+/* Aplicamos retrasos para crear el efecto de ola */
+.price-value .char:nth-child(1) {
+  animation-delay: 0s;
+}
+.price-value .char:nth-child(2) {
+  animation-delay: 0.15s; /* El segundo empieza un poco después */
+}
+.price-value .char:nth-child(3) {
+  animation-delay: 0.3s; /* El tercero empieza después del segundo */
+}
+
+.game-over-screen:not(.active) {
+  opacity: 0;
+  visibility: hidden;
+}
+.game-over-screen.active {
+  opacity: 1;
+  visibility: visible;
+}
+.game-over-screen {
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  position: fixed;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  top: 0;
+  left: 0;
+  z-index: 20;
+}
+.game-over-screen-background {
+  background-color: rgba(0, 0, 0, 0.8);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.game-over-screen-content {
+  position: absolute;
+  background-color: #012533;
+  width: calc(100% - 40px);
+  max-width: 600px;
+  overflow-y: auto;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 21;
+  border-radius: 12px;
+  padding: 30px 20px;
+}
+.final-score-number {
+  text-align: center;
+}
+.game-over-screen-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.final-score {
+  font-size: 18px;
+  font-family: var(--font-mono-hb-8);
+  color: #e8ff6c;
+}
+.final-score-text {
+  font-size: 14px;
+  font-family: var(--font-mono-hb-8);
+  color: #e8ff6c;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.game-over-high-score {
+  font-size: 18px;
+  font-family: var(--font-mono-8);
+  color: var(--color-subbed);
+}
+.high-score-text {
+  font-size: 14px;
+  font-family: var(--font-mono-8);
+  color: var(--color-subbed);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.flame {
+  --frame-width: 16;
+  --frame-height: 16;
+  --frames: 6;
+  --scale: 1.8;
+  width: calc(var(--frame-width) * var(--scale) * 1px);
+  height: calc(var(--frame-height) * var(--scale) * 1px);
+  background: url("/assets/flamme-green.png") no-repeat;
+  background-size: calc(var(--frame-width) * var(--frames) * var(--scale) * 1px)
+    calc(var(--frame-height) * var(--scale) * 1px);
+  image-rendering: pixelated;
+  animation: flameAnim 0.6s steps(var(--frames)) infinite;
+  position: absolute;
+  left: 0;
+  top: 20%;
+  transform: translate(calc(-100% - 2px), -50%);
+}
+
+@keyframes flameAnim {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: calc(
+        -1 * var(--frame-width) * var(--frames) * var(--scale) * 1px
+      )
+      0;
+  }
+}
+.controls-product-label {
+  font-family: var(--font-8-bold);
+}

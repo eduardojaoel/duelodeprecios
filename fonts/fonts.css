@@ -1,0 +1,42 @@
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("ibmplexmono-regular-webfont.woff2") format("woff2"),
+    url("ibmplexmono-regular-webfont.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("ibmplexmono-bold-webfont.woff2") format("woff2"),
+    url("ibmplexmono-bold-webfont.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Pixel Operator 8";
+  src: url("pixeloperator8-webfont.woff2") format("woff2"),
+    url("pixeloperator8-webfont.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Pixel Operator 8 Bold";
+  src: url("pixeloperator8-bold-webfont.woff2") format("woff2"),
+    url("pixeloperator8-bold-webfont.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Pixel Operator Mono 8";
+  src: url("pixeloperatormono8-webfont.woff2") format("woff2"),
+    url("pixeloperatormono8-webfont.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Pixel Operator Mono HB 8";
+  src: url("pixeloperatorhb8-webfont.woff2") format("woff2"),
+    url("pixeloperatorhb8-webfont.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}

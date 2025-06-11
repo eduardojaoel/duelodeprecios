@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Duelo de Precios - ¿Cuesta Más o Menos?</title>
+    <meta
+      name="description"
+      content="¡Juega Duelo de Precios al estilo arcade! Adivina si el precio del siguiente producto es más alto o más bajo y consigue el mayor puntaje. ¡Gratis y divertido!"
+    />
+    <meta
+      name="keywords"
+      content="higher or lower, mas alto o mas bajo, juego, arcade, precios, adivinar, gratis, pasatiempo, puntaje, duelo de precios"
+    />
+    <!--
+      <link rel="icon" href="favicon.ico" sizes="any" />
+      <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+      <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+      <meta
+        property="og:title"
+        content="Higher or Lower Arcade - ¡Desafío de Precios!"
+      />
+      <meta
+        property="og:description"
+        content="¿Podrás adivinar si el producto es más caro o más barato? ¡Pon a prueba tu instinto y consigue el High Score!"
+      />
+      <meta
+        property="og:image"
+        content="https://tu-usuario.github.io/tu-juego/images/social-preview.png"
+      />
+      <meta property="og:url" content="https://tu-usuario.github.io/tu-juego/" />
+      <meta property="og:type" content="website" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta
+        name="twitter:title"
+        content="Higher or Lower Arcade - ¡Desafío de Precios!"
+      />
+      <meta
+        name="twitter:description"
+        content="¿Podrás adivinar si el producto es más caro o más barato? ¡Pon a prueba tu instinto y consigue el High Score!"
+      />
+      <meta
+        name="twitter:image"
+        content="https://tu-usuario.github.io/tu-juego/images/social-preview.png"
+      />
+    -->
+    <link rel="stylesheet" href="fonts/fonts.css" />
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <h1 class="visually-hidden">Duelo de Precios</h1>
+    <header class="header section-width">
+      <svg
+        class="logo active"
+        id="logo"
+        width="217"
+        height="71"
+        aria-label="Logo de Duelo de Precios"
+      >
+        <use href="assets/logo.svg#logo"></use>
+      </svg>
+
+      <div class="score">
+        <div class="score-wrapper current-score-wrapper">
+          <div class="flame" id="score-flamme" style="display: none"></div>
+          <span id="current-score">0</span>
+          <span class="current-score-label">Puntos</span>
+
+          <svg viewBox="0 0 20 21" fill="none" class="icon icon-cart">
+            <path
+              fill="currentColor"
+              d="M0 .84h4v4h16v11H2v-13H0v-2Zm4 13h14v-7H4v7Zm0 4h3v3H4v-3Zm14 0h-3v3h3v-3Z"
+            />
+          </svg>
+        </div>
+        <div class="score-wrapper high-score-wrapper">
+          <span class="high-score-value">0</span>
+          <span class="high-score-label">Record</span>
+          <svg viewBox="0 0 21 19" fill="none" class="icon icon-trophy">
+            <path
+              fill="currentColor"
+              d="M14.54.44h-10v2h-4v10h6v-10h8v10h6v-10h-4v-2h-2Zm4 4v6h-2v-6h2Zm-14 6h-2v-6h2v6Zm12 2h-12v2h12v-2Zm-7 2h2v2h3v2h-8v-2h3v-2Z"
+            />
+          </svg>
+        </div>
+      </div>
+    </header>
+
+    <main class="game-container section-width">
+      <section id="start-screen" class="start-screen active">
+        <div class="start-screen-content narrow-section-width">
+          <p id="intro-text" class="intro-text"></p>
+          <p class="high-score-display">
+            <span>Tu Record: </span><span class="high-score-value">0</span
+            ><span> Puntos</span>
+          </p>
+          <!-- <button id="play-button" class="play-button" disabled>
+            Cargando...
+          </button> -->
+
+          <button
+            id="play-button"
+            type="button"
+            class="nes-btn is-disabled"
+            disabled
+          >
+            <span>Cargando</span>
+            <svg
+              width="13"
+              height="21"
+              viewBox="0 0 13 21"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12.9758 0.572754H0.97583V6.57275H2.97583V8.57275H4.97583V12.5728H2.97583V14.5728H0.97583V20.5728H12.9758V14.5728H10.9758V12.5728H8.97583V8.57275H10.9758V6.57275H12.9758V0.572754ZM10.9758 6.57275H8.97583V8.57275H4.97583V6.57275H2.97583V2.57275H10.9758V6.57275ZM8.97583 12.5728V14.5728H10.9758V18.5728H2.97583V14.5728H4.97583V12.5728H8.97583Z"
+                fill="#023A50"
+              />
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <section id="game-screen" class="game-screen screen">
+        <div class="game-arena-wrapper">
+          <div id="game-arena" class="game-arena"></div>
+        </div>
+        <div class="controls-area">
+          <p class="controls-label">
+            <span
+              id="controls-product-label"
+              class="controls-product-label"
+            ></span>
+            Cuesta
+          </p>
+          <button id="lower-button" class="nes-btn lower">
+            <span>Menos</span>
+            <svg
+              width="14"
+              height="3"
+              viewBox="0 0 14 3"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M13.5264 2.87988H0.699219V0.366211H13.5264V2.87988Z"
+                fill="#023A50"
+              />
+            </svg>
+          </button>
+          <button id="higher-button" class="nes-btn higher">
+            <span>Más</span>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M7.91504 0.458984V5.61621H13.0713V8.12891H7.91406V13.2861L5.40137 13.2852V8.12891H0.244141V5.61621H5.40234V0.458008L7.91504 0.458984ZM5.65137 5.61621H5.65234V0.708008H5.65137V5.61621Z"
+                fill="#023A50"
+              />
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <section id="game-over-screen" class="game-over-screen">
+        <div
+          class="game-over-screen-background"
+          id="game-over-screen-background"
+        ></div>
+
+        <div class="game-over-screen-content" id="game-over-screen-content">
+          <span id="final-score" class="final-score">0</span>
+          <p class="final-score-text">Tu Puntaje</p>
+
+          <span id="game-over-high-score" class="game-over-high-score">0</span>
+          <p class="high-score-text">Record</p>
+          <button id="play-again-button" class="nes-btn">Jugar de Nuevo</button>
+        </div>
+      </section>
+    </main>
+
+    <audio id="sfx-correct" src="audios/sfx-correct.mp3" preload="auto"></audio>
+    <audio
+      id="sfx-incorrect"
+      src="audios/sfx-incorrect.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="sfx-scanner-beep"
+      src="audios/sfx-scanner-beep.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="sfx-charging"
+      src="audios/sfx-charging.mp3"
+      preload="auto"
+    ></audio>
+    <script src="js/script.js" defer></script>
+  </body>
+</html>
