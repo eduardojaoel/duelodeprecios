@@ -165,6 +165,43 @@ document.addEventListener("DOMContentLoaded", () => {
     beep: new Audio(hostUrl + soundPaths.beep),
   };
 
+  const totalSounds = Object.keys(sounds).length;
+  let soundsLoaded = 0;
+
+  console.log(`Iniciando precarga de ${totalSounds} sonidos...`);
+
+  // Iteramos sobre cada sonido para añadirle un listener.
+  for (const key in sounds) {
+    const sound = sounds[key];
+
+    // El evento 'canplaythrough' se dispara cuando el navegador
+    // cree que puede reproducir el audio completo sin interrupciones.
+    sound.addEventListener(
+      "canplaythrough",
+      () => {
+        // Marcamos este sonido como cargado una sola vez.
+        // 'once: true' hace esto automáticamente en navegadores modernos,
+        // pero es bueno tener una comprobación manual.
+        if (!sound.preloaded) {
+          soundsLoaded++;
+          sound.preloaded = true; // Añadimos una bandera para no contarlo dos veces.
+          console.log(
+            `🔊 Sonido cargado: ${key} (${soundsLoaded}/${totalSounds})`
+          );
+
+          // Si ya se cargaron todos los sonidos, ejecutamos una función.
+          if (soundsLoaded === totalSounds) {
+            todosLosSonidosCargados();
+          }
+        }
+      },
+      { once: true }
+    ); // { once: true } asegura que el evento se escuche solo una vez por sonido.
+
+    // Importante: le decimos al navegador que empiece a descargar el audio.
+    sound.load();
+  }
+
   // 3. ¡Este es el paso clave! Precargar todo.
   // Le decimos al navegador que queremos descargar los datos de audio ahora.
   console.log("Iniciando la precarga de sonidos...");
