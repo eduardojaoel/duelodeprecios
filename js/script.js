@@ -609,10 +609,6 @@ document.addEventListener("DOMContentLoaded", () => {
       productReference.price
     );
 
-    if (isCorrect) {
-      audio.play("beep");
-    }
-
     setTimeout(() => {
       currentGuessCard.classList.remove("correct-guess", "wrong-guess");
 
@@ -621,6 +617,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateCurrentScoreDisplay();
         saveHighScoreToStorage();
         loadHighScoreFromStorage();
+        audio.play("beep");
 
         outOfViewElements.push(currentReferenceElement);
 
