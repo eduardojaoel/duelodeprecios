@@ -22,8 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   const playAgainButton = document.getElementById("play-again-button");
 
-  const hostUrl = "https://eduardojaoel.github.io/duelodeprecios/";
-
   const sfxScannerBeep = document.getElementById("sfx-scanner-beep");
   const sfxCharging = document.getElementById("sfx-charging");
   const sfxCorrect = document.getElementById("sfx-correct");
@@ -150,6 +148,114 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  class AudioEngine {
+    constructor() {
+      // 1. Crear el Contexto de Audio. Es el corazón de la Web Audio API.
+      // Se maneja el prefijo 'webkit' para máxima compatibilidad con Safari.
+      this.audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      this.soundBuffers = {}; // Objeto para guardar los sonidos ya decodificados.
+      this.isReady = false;
+
+      // Desbloquear el audio en iOS/Chrome con la primera interacción del usuario.
+      const unlockAudio = () => {
+        if (this.audioContext.state === "suspended") {
+          this.audioContext.resume();
+        }
+        // Remover el listener una vez que se ejecute.
+        document.body.removeEventListener("touchstart", unlockAudio);
+        document.body.removeEventListener("click", unlockAudio);
+      };
+      document.body.addEventListener("touchstart", unlockAudio, { once: true });
+      document.body.addEventListener("click", unlockAudio, { once: true });
+    }
+
+    /**
+     * Carga un único archivo de audio, lo decodifica y lo guarda en el buffer.
+     * @param {string} name - El nombre clave para el sonido (ej: 'beep').
+     * @param {string} url - La URL completa del archivo de audio.
+     * @returns {Promise<AudioBuffer>}
+     */
+    async loadSound(name, url) {
+      try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        // Decodifica el archivo (MP3, WAV, etc.) a datos de audio puros.
+        const audioBuffer = await this.audioContext.decodeAudioData(
+          arrayBuffer
+        );
+        this.soundBuffers[name] = audioBuffer;
+      } catch (error) {
+        console.error(`Error al cargar el sonido ${name} desde ${url}:`, error);
+        throw error;
+      }
+    }
+
+    /**
+     * Carga una lista de sonidos y ejecuta una función cuando todo está listo.
+     * @param {object} soundPaths - Objeto con los nombres y rutas relativas de los sonidos.
+     * @param {string} hostUrl - La URL base para construir las rutas completas.
+     * @param {function} onReadyCallback - La función a llamar cuando todo esté cargado.
+     */
+    async loadAllSounds(soundPaths, hostUrl, onReadyCallback) {
+      console.log("🚀 Iniciando carga robusta de sonidos...");
+      const loadPromises = [];
+      for (const name in soundPaths) {
+        const url = hostUrl + soundPaths[name];
+        loadPromises.push(this.loadSound(name, url));
+      }
+
+      try {
+        await Promise.all(loadPromises);
+        this.isReady = true;
+        console.log(
+          "✅ Motor de audio listo. Todos los sonidos decodificados y en memoria."
+        );
+        if (onReadyCallback) {
+          onReadyCallback();
+        }
+      } catch (error) {
+        console.error("Falló la carga de uno o más sonidos.", error);
+      }
+    }
+
+    /**
+     * Reproduce un sonido desde el buffer.
+     * @param {string} name - El nombre del sonido a reproducir.
+     * @param {object} [options] - Opciones como volumen y velocidad.
+     * @param {number} [options.volume=1] - Volumen de 0.0 a 1.0 (o más).
+     * @param {number} [options.rate=1] - Velocidad de reproducción (1 = normal).
+     */
+    play(name, options = {}) {
+      if (!this.soundBuffers[name]) {
+        console.warn(`Sonido "${name}" no encontrado o no cargado.`);
+        return;
+      }
+
+      // --- Creación de la cadena de nodos de audio ---
+
+      // 1. La fuente: El buffer con los datos del sonido.
+      const source = this.audioContext.createBufferSource();
+      source.buffer = this.soundBuffers[name];
+      source.playbackRate.value = options.rate || 1;
+
+      // 2. El control de volumen: Un nodo de ganancia.
+      const gainNode = this.audioContext.createGain();
+      gainNode.gain.value = options.volume !== undefined ? options.volume : 1;
+
+      // 3. Conectar los nodos en una cadena: source -> gain -> speakers
+      source.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+
+      // 4. ¡Reproducir!
+      source.start(0);
+    }
+  }
+
+  // --- CÓMO USAR EL MOTOR DE AUDIO ---
+
+  // 1. Definir las rutas (como ya lo tenías)
+  const hostUrl = "https://eduardojaoel.github.io/duelodeprecios/";
   const soundPaths = {
     charging: "audios/sfx-charging.mp3",
     correct: "audios/sfx-correct.mp3",
@@ -157,74 +263,16 @@ document.addEventListener("DOMContentLoaded", () => {
     beep: "audios/sfx-scanner-beep.mp3",
   };
 
-  // 2. Crear los objetos de audio
-  const sounds = {
-    charging: new Audio(hostUrl + soundPaths.charging),
-    correct: new Audio(hostUrl + soundPaths.correct),
-    incorrect: new Audio(hostUrl + soundPaths.incorrect),
-    beep: new Audio(hostUrl + soundPaths.beep),
-  };
+  // 2. Crear una instancia del motor.
+  const audio = new AudioEngine();
 
-  const totalSounds = Object.keys(sounds).length;
-  let soundsLoaded = 0;
-
-  console.log(`Iniciando precarga de ${totalSounds} sonidos...`);
-
-  // Iteramos sobre cada sonido para añadirle un listener.
-  for (const key in sounds) {
-    const sound = sounds[key];
-
-    // El evento 'canplaythrough' se dispara cuando el navegador
-    // cree que puede reproducir el audio completo sin interrupciones.
-    sound.addEventListener(
-      "canplaythrough",
-      () => {
-        // Marcamos este sonido como cargado una sola vez.
-        // 'once: true' hace esto automáticamente en navegadores modernos,
-        // pero es bueno tener una comprobación manual.
-        if (!sound.preloaded) {
-          soundsLoaded++;
-          sound.preloaded = true; // Añadimos una bandera para no contarlo dos veces.
-          console.log(
-            `🔊 Sonido cargado: ${key} (${soundsLoaded}/${totalSounds})`
-          );
-
-          // Si ya se cargaron todos los sonidos, ejecutamos una función.
-          if (soundsLoaded === totalSounds) {
-            todosLosSonidosCargados();
-          }
-        }
-      },
-      { once: true }
-    ); // { once: true } asegura que el evento se escuche solo una vez por sonido.
-
-    // Importante: le decimos al navegador que empiece a descargar el audio.
-    sound.load();
-  }
-
-  // 3. ¡Este es el paso clave! Precargar todo.
-  // Le decimos al navegador que queremos descargar los datos de audio ahora.
-  console.log("Iniciando la precarga de sonidos...");
-  for (const key in sounds) {
-    if (sounds.hasOwnProperty(key)) {
-      const sound = sounds[key];
-      sound.preload = "auto"; // Atributo que sugiere la descarga completa
-      sound.load(); // Método que inicia la descarga
-    }
-  }
-
-  // 4. Tu función de reproducción sigue siendo la misma y ahora será más rápida
-  function playSound(soundName) {
-    // Asegúrate de que el sonido existe antes de intentar clonarlo
-    if (!sounds[soundName]) {
-      console.error(`El sonido "${soundName}" no existe.`);
-      return;
-    }
-
-    // Clonar el nodo permite la reproducción simultánea
-    const audio = sounds[soundName].cloneNode();
-    audio.play();
-  }
+  // 3. Cargar todos los sonidos y definir qué hacer cuando estén listos.
+  audio.loadAllSounds(soundPaths, hostUrl, () => {
+    // Esta función se ejecuta cuando todo está listo.
+    // Aquí puedes habilitar la interfaz de usuario.
+    console.log("La aplicación está lista para usarse.");
+    document.getElementById("miBotonDeJuego").disabled = false;
+  });
 
   // --- 5. Funciones de Actualización de UI ---
   function addProductToArena(product, role, showPrice) {
@@ -448,7 +496,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .querySelector(".validation-icon")
             .classList.add("icon-fade-in");
           validated = true;
-          playSound("incorrect");
+          audio.play("incorrect");
         }
 
         if (
@@ -462,7 +510,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .querySelector(".validation-icon")
             .classList.add("icon-fade-in");
           validated = true;
-          playSound("correct");
+          audio.play("correct");
 
           setTimeout(() => {
             priceElement.parentNode.classList.remove("good-guess");
@@ -484,7 +532,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .querySelector(".validation-icon")
             .classList.add("icon-fade-in");
           validated = true;
-          playSound("incorrect");
+          audio.play("incorrect");
         }
         if (
           guess == "lower" &&
@@ -497,7 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .querySelector(".validation-icon")
             .classList.add("icon-fade-in");
           validated = true;
-          playSound("correct");
+          audio.play("correct");
 
           setTimeout(() => {
             priceElement.parentNode.classList.remove("good-guess");
@@ -550,7 +598,6 @@ document.addEventListener("DOMContentLoaded", () => {
       : (guess === "higher" && isHigher) || (guess === "lower" && !isHigher);
 
     /* currentGuessCard.classList.add(isCorrect ? "correct-guess" : "wrong-guess"); */
-    playSound("charging");
 
     animatePriceReveal(
       0.0,
@@ -562,6 +609,10 @@ document.addEventListener("DOMContentLoaded", () => {
       productReference.price
     );
 
+    if (isCorrect) {
+      audio.play("beep");
+    }
+
     setTimeout(() => {
       currentGuessCard.classList.remove("correct-guess", "wrong-guess");
 
@@ -570,7 +621,6 @@ document.addEventListener("DOMContentLoaded", () => {
         updateCurrentScoreDisplay();
         saveHighScoreToStorage();
         loadHighScoreFromStorage();
-        playSound("beep");
 
         outOfViewElements.push(currentReferenceElement);
 
@@ -734,6 +784,8 @@ document.addEventListener("DOMContentLoaded", () => {
   playButton.addEventListener("click", startGame);
   higherButton.addEventListener("click", () => handleGuess("higher"));
   lowerButton.addEventListener("click", () => handleGuess("lower"));
+  higherButton.addEventListener("click", () => audio.play("charging"));
+  lowerButton.addEventListener("click", () => audio.play("charging"));
   playAgainButton.addEventListener("click", restartGame);
   window.addEventListener("resize", function () {
     setGameArenaTranslate();
