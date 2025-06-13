@@ -585,7 +585,7 @@ body {
 
 .invoice-wrapper {
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 14px;
   text-transform: uppercase;
 }
 .invoice-title {
@@ -616,7 +616,7 @@ body {
 .invoice-line-score-value {
   font-family: var(--font-mono-hb-8);
   color: var(--color-accent);
-  font-size: 13px;
+  font-size: 16px;
 }
 .invoice-line-record-label,
 .invoice-line-record-value {
@@ -625,7 +625,7 @@ body {
 .invoice-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   color: var(--color-subbed);
 }
 .play-again-button {
