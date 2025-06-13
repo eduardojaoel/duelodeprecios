@@ -174,12 +174,138 @@
         ></div>
 
         <div class="game-over-screen-content" id="game-over-screen-content">
-          <span id="final-score" class="final-score">0</span>
+          <div class="invoice-wrapper">
+            <div class="invoice-logo-wrapper">
+              <svg
+                width="215"
+                height="65"
+                viewBox="0 0 215 65"
+                fill="none"
+                class="invoice-logo"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M0 29.7358V0H21.238V4.24672H25.4847V8.49344H29.7314V21.238H25.4847V25.4847H21.238V29.7314H0V29.7358ZM8.49781 25.4891H16.9956V21.2423H21.2423V8.49781H16.9956V4.25109H8.49781V25.4891Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M38.2291 29.736V25.4893H33.9824V8.49805H42.4802V25.4893H55.2248V8.49805H63.7226V29.736H38.2335H38.2291Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M72.2116 29.736V25.4893H67.9648V12.7448H72.2116V8.49805H93.4495V12.7448H97.6963V21.2382H76.4583V25.4849H93.4495V29.7316H72.2116V29.736ZM76.4583 16.9915H89.2028V12.7448H76.4583V16.9915Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M99.1963 29.7358V25.4891H107.694V4.24672H103.447V0H116.192V25.4847H124.69V29.7314H99.2007L99.1963 29.7358Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M131.43 29.736V25.4893H127.184V12.7448H131.43V8.49805H152.668V12.7448H156.915V25.4893H152.668V29.736H131.43ZM135.677 25.4893H148.422V12.7448H135.677V25.4893Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M177.855 30.5496V27.9255H175.231V20.0531H177.855V17.4289H188.352V12.1807H193.6V30.5496H177.855ZM180.479 27.9255H188.352V20.0531H180.479V27.9255Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M198.848 30.5494V27.9252H196.224V20.0528H198.848V17.4287H211.968V20.0528H214.593V25.3011H201.472V27.9252H211.968V30.5494H198.848ZM201.472 22.677H209.344V20.0528H201.472V22.677Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M0 64.9276V37.0029H23.9355V40.9922H27.9247V52.9599H23.9355V56.9492H7.97849V64.9276H0ZM7.97849 52.9599H19.9462V40.9922H7.97849V52.9599Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M41.5957 48.9707H45.5849V52.9599H41.5957V64.9277H33.6172V44.9814H41.5957V48.9707ZM57.5527 44.9814V48.9707H45.5849V44.9814H57.5527Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M64.771 64.9277V60.9384H60.7817V48.9707H64.771V44.9814H84.7172V48.9707H88.7065V56.9492H68.7602V60.9384H84.7172V64.9277H64.771ZM68.7602 52.9599H80.728V48.9707H68.7602V52.9599Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M97.4453 64.9277V60.9384H93.4561V48.9707H97.4453V44.9814H121.381V48.9707H101.435V60.9384H121.381V64.9277H97.4453Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M133.912 40.9922V37.0029H141.89V40.9922H133.912ZM125.933 64.9276V60.9384H133.912V48.9707H129.922V44.9814H141.89V60.9384H149.869V64.9276H125.933Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M156.706 64.9277V60.9384H152.717V48.9707H156.706V44.9814H176.652V48.9707H180.642V60.9384H176.652V64.9277H156.706ZM160.695 60.9384H172.663V48.9707H160.695V60.9384Z"
+                  fill="#CDCDCD"
+                />
+                <path
+                  d="M184.631 64.9277V60.9384H204.577V56.9492H188.62V52.9599H184.631V48.9707H188.62V44.9814H208.566V48.9707H192.609V52.9599H208.566V56.9492H212.556V60.9384H208.566V64.9277H184.631Z"
+                  fill="#CDCDCD"
+                />
+              </svg>
+            </div>
+            <p class="invoice-centered-text">Duelo de Precios, S.A.</p>
+            <div class="invoice-date-time">
+              <span class="invoice-date">
+                <span class="invoice-date-label">Fecha: </span>
+                <span class="invoice-date-value" id="invoice-date-value"
+                  >00-00-0000</span
+                >
+              </span>
+              <span class="invoice-time">
+                <span class="invoice-time-label">Hora: </span>
+                <span class="invoice-time-value" id="invoice-time-value"
+                  >00:00</span
+                >
+              </span>
+            </div>
+            <div class="invoice-number">
+              <span class="invoice-number-label">Factura # </span>
+              <span class="invoice-number-value" id="invoice-number-value"
+                >DDP00000000</span
+              >
+            </div>
+            <div class="invoice-line"></div>
+            <p class="invoice-title">FACTURA</p>
+            <div class="invoice-line"></div>
+            <div class="invoice-line-item">
+              <span class="invoice-line-guesses-label">Aciertos (E)</span>
+              <span
+                class="invoice-line-guesses-value"
+                id="invoice-line-guesses-value"
+                >0</span
+              >
+            </div>
+
+            <div class="invoice-line"></div>
+            <div class="invoice-line-item">
+              <span class="invoice-line-total-label">Total</span>
+              <span
+                class="invoice-line-total-value"
+                id="invoice-line-total-value"
+                >$0.00</span
+              >
+            </div>
+            <div class="invoice-line-item">
+              <span class="invoice-line-score-label">Puntaje</span>
+              <span class="invoice-line-score-value" id="final-score">0</span>
+            </div>
+            <div class="invoice-line-item">
+              <span class="invoice-line-record-label">Record</span>
+              <span class="invoice-line-record-value" id="game-over-high-score"
+                >0</span
+              >
+            </div>
+            <div class="invoice-line"></div>
+            <p class="invoice-centered-text invoice-url">duelodeprecios.com</p>
+          </div>
+
+          <!-- <span id="final-score" class="final-score">0</span>
           <p class="final-score-text">Tu Puntaje</p>
 
           <span id="game-over-high-score" class="game-over-high-score">0</span>
-          <p class="high-score-text">Record</p>
-          <button id="play-again-button" class="nes-btn">Jugar de Nuevo</button>
+          <p class="high-score-text">Record</p> -->
+          <button id="play-again-button" class="nes-btn play-again-button">
+            Jugar de Nuevo
+          </button>
         </div>
       </section>
     </main>

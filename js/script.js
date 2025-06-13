@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- 2. Variables Globales y Constantes del Juego ---
   let allProducts = [];
+  let productsGuessed = [];
   let outOfViewElements = [];
   let productReference = null; // Producto actual de referencia (el de arriba)
   let productToGuess = null; // Producto actual a adivinar (el de abajo)
@@ -39,9 +40,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTranslate = 0;
   let gameArenaHeight = 0;
 
-  const HIGH_SCORE_KEY = "higherLowerArcadeHighScore_v4";
-  const PLAYER_ID_KEY = "higherLowerArcadePlayerId_v4";
-  const GAME_VERSION = "1.3";
+  const now = new Date();
+
+  const HIGH_SCORE_KEY = "dueloDePreciosHighScore_v1";
+  const PLAYER_ID_KEY = "dueloDePreciosPlayerId_v1";
+  const GAME_VERSION = "1.0";
 
   // ¡¡¡IMPORTANTE!!! Reemplaza estas con tus URLs y Claves Reales de Supabase
   const SUPABASE_FUNCTION_URL =
@@ -102,6 +105,31 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem(PLAYER_ID_KEY, playerId);
     }
     return playerId;
+  }
+
+  function getDate() {
+    const day = String(now.getDate()).padStart(2, "0");
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const year = now.getFullYear();
+    const formattedDate = `${day}-${month}-${year}`;
+
+    return formattedDate;
+  }
+
+  function getTime() {
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const formattedTime = `${hours}:${minutes}`;
+
+    return formattedTime;
+  }
+
+  function setDateAndTime() {
+    const invoiceDateValue = document.getElementById("invoice-date-value");
+    const invoiceTimeValue = document.getElementById("invoice-time-value");
+
+    invoiceDateValue.textContent = getDate();
+    invoiceTimeValue.textContent = getTime();
   }
 
   function getRandomProduct(excludeProduct = null) {
@@ -376,6 +404,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return false;
     }
 
+    productsGuessed = [];
+
     gameArena.innerHTML = ""; // Limpiar arena por si acaso
 
     const refEl = addProductToArena(productReference, "reference", true);
@@ -591,6 +621,19 @@ document.addEventListener("DOMContentLoaded", () => {
       productReference.price
     );
 
+    if (isCorrect) {
+      productsGuessed.push(productToGuess);
+    } else {
+      document.getElementById("invoice-line-total-value").textContent =
+        "$" +
+        productsGuessed
+          .reduce((accumulator, product) => accumulator + product.price, 0)
+          .toFixed(2);
+
+      logScoreToDB();
+      setDateAndTime();
+    }
+
     setTimeout(() => {
       currentGuessCard.classList.remove("correct-guess", "wrong-guess");
 
@@ -671,9 +714,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const gameData = {
       score: currentScore,
       timestamp: new Date().toISOString(),
-      player_id: obtenerPlayerId(),
+      playerId: obtenerPlayerId(),
       game_version: GAME_VERSION,
     };
+
+    const invoiceNumberValue = document.getElementById("invoice-number-value");
 
     console.log("Enviando datos de partida a Supabase:", gameData);
 
@@ -690,6 +735,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (response.ok) {
         const result = await response.json();
         console.log("Partida registrada exitosamente en Supabase:", result);
+
+        if (invoiceNumberValue) {
+          const responseId = result.data.id;
+          const idFormatted = "DDP" + responseId.toString().padStart(8, "0");
+          invoiceNumberValue.textContent = idFormatted;
+        }
       } else {
         let errorData;
         try {
@@ -715,12 +766,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function triggerGameOver() {
     saveHighScoreToStorage();
     finalScoreDisplay.textContent = currentScore;
+    document.getElementById("invoice-line-guesses-value").textContent =
+      currentScore;
     if (gameOverHighScoreDisplay)
       gameOverHighScoreDisplay.textContent = highScore;
 
-    logScoreToDB();
-
     showScreen(gameOverScreen);
+
+    console.log(productsGuessed);
   }
 
   function restartGame() {
@@ -733,6 +786,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setGameArenaHeight();
     }, 500);
     showScreen(gameScreen);
+    productsGuessed = [];
 
     scoreFlamme.style.display = "none";
 

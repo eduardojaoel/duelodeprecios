@@ -511,7 +511,7 @@ body {
 .game-over-screen-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 20px;
 }
 .final-score {
   font-size: 18px;
@@ -569,4 +569,74 @@ body {
 }
 .controls-product-label {
   font-family: var(--font-8-bold);
+}
+.invoice-line {
+  margin: 6px 0;
+  height: 1px;
+  background: repeating-linear-gradient(
+      90deg,
+      var(--color-subbed) 0 5px,
+      transparent 0 9px
+    )
+    bottom;
+  background-size: 100% 1px;
+  background-repeat: no-repeat;
+}
+
+.invoice-wrapper {
+  font-family: var(--font-body);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.invoice-title {
+  text-align: center;
+  font-family: var(--font-mono-hb-8);
+  margin-bottom: -3px;
+  font-size: 12px;
+}
+.invoice-centered-text {
+  text-align: center;
+}
+.invoice-date-time {
+  display: flex;
+  justify-content: space-between;
+}
+.invoice-number {
+  display: flex;
+  justify-content: space-between;
+}
+.invoice-line-item {
+  display: flex;
+  justify-content: space-between;
+}
+.invoice-url {
+  text-transform: none;
+}
+.invoice-line-score-label,
+.invoice-line-score-value {
+  font-family: var(--font-mono-hb-8);
+  color: var(--color-accent);
+  font-size: 13px;
+}
+.invoice-line-record-label,
+.invoice-line-record-value {
+  font-family: var(--font-mono-hb-8);
+}
+.invoice-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--color-subbed);
+}
+.play-again-button {
+  justify-content: center;
+}
+.invoice-logo-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.invoice-logo {
+  width: 130px;
+  height: auto;
 }
