@@ -1,10 +1,12 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js";
+
 document.addEventListener("DOMContentLoaded", () => {
   // --- 1. Referencias a Elementos del DOM ---
   const startScreen = document.getElementById("start-screen");
   const gameScreen = document.getElementById("game-screen");
   const gameOverScreen = document.getElementById("game-over-screen");
 
-  const logo = document.getElementById("logo"); // Asegúrate que este ID exista en tu HTML si lo usas
+  const logo = document.getElementById("logo");
   const introTextElement = document.getElementById("intro-text");
   const playButton = document.getElementById("play-button");
   const highScoreDisplay = document.querySelectorAll(".high-score-value");
@@ -31,12 +33,14 @@ document.addEventListener("DOMContentLoaded", () => {
   let allProducts = [];
   let productsGuessed = [];
   let outOfViewElements = [];
-  let productReference = null; // Producto actual de referencia (el de arriba)
-  let productToGuess = null; // Producto actual a adivinar (el de abajo)
+  let productReference = null;
+  let productToGuess = null;
+  let productReserve = null; // Producto precargado para la siguiente ronda
   let currentScore = 0;
   let highScore = 0;
   let canGuess = true;
   let isLoading = true;
+  let isLoadingNextProduct = false; // Flag para controlar la precarga
   let currentTranslate = 0;
   let gameArenaHeight = 0;
 
@@ -46,11 +50,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const PLAYER_ID_KEY = "dueloDePreciosPlayerId_v1";
   const GAME_VERSION = "1.0";
 
-  // ¡¡¡IMPORTANTE!!! Reemplaza estas con tus URLs y Claves Reales de Supabase
-  const SUPABASE_FUNCTION_URL =
-    "https://ooatrkqiysrrwijbchej.supabase.co/functions/v1/log-partida"; // Usa tu URL desplegada
+  const SUPABASE_LOG_SCORE =
+    "https://ooatrkqiysrrwijbchej.supabase.co/functions/v1/log-score";
   const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vYXRya3FpeXNycndpamJjaGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4OTI1ODgsImV4cCI6MjA2NDQ2ODU4OH0.SJB5Rc323ASOebF-aBdZVd9SZg5QXUXeyo4zj3FMWqg"; // Tu Anon Key pública
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vYXRya3FpeXNycndpamJjaGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4OTI1ODgsImV4cCI6MjA2NDQ2ODU4OH0.SJB5Rc323ASOebF-aBdZVd9SZg5QXUXeyo4zj3FMWqg";
+  const SUPABASE_URL = "https://ooatrkqiysrrwijbchej.supabase.co";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // --- 3. Mensajes de Introducción ---
   const introMessages = [
@@ -132,33 +137,99 @@ document.addEventListener("DOMContentLoaded", () => {
     invoiceTimeValue.textContent = getTime();
   }
 
-  function getRandomProduct(excludeProduct = null) {
-    if (allProducts.length === 0) return null;
-    let product;
-    let attempts = 0;
-    const maxAttempts = allProducts.length * 2;
+  // Función mejorada para obtener producto aleatorio con mejor manejo de CORS
+  async function getRandomProduct(excludeProduct = null) {
+    try {
+      console.log("Obteniendo producto aleatorio...");
 
-    do {
-      product = allProducts[Math.floor(Math.random() * allProducts.length)];
-      attempts++;
-    } while (
-      allProducts.length > 1 &&
-      excludeProduct &&
-      product.image === excludeProduct.image &&
-      attempts < maxAttempts
-    );
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.append("count", "1");
 
-    if (
-      allProducts.length > 1 &&
-      excludeProduct &&
-      product.image === excludeProduct.image &&
-      attempts >= maxAttempts
-    ) {
-      console.warn(
-        "No se pudo encontrar un producto completamente diferente. Puede haber repetición o se están acabando los productos únicos."
-      );
+      if (excludeProduct && excludeProduct.id) {
+        params.append("exclude_id", excludeProduct.id.toString());
+      }
+
+      // Usar fetch directo en lugar de supabase.functions.invoke para mejor control de CORS
+      const url = `${SUPABASE_URL}/functions/v1/get-random-products?${params.toString()}`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.product) {
+        throw new Error("No se encontró producto en la respuesta");
+      }
+
+      console.log("Producto obtenido:", data.product);
+      return data.product;
+    } catch (error) {
+      console.error("Error al obtener producto aleatorio:", error);
+
+      // Fallback: usar consulta directa si falla la edge function
+      console.log("Usando fallback: consulta directa");
+      try {
+        let query = supabase
+          .from("products")
+          .select("id, title, brand, category, measure, price, image")
+          .eq("is_active", true);
+
+        if (excludeProduct && excludeProduct.id) {
+          query = query.neq("id", excludeProduct.id);
+        }
+
+        const { data, error } = await query.limit(50);
+
+        if (error) {
+          throw new Error(`Fallback error: ${error.message}`);
+        }
+
+        if (!data || data.length === 0) {
+          throw new Error("No products found in fallback");
+        }
+
+        // Seleccionar uno aleatorio
+        const randomIndex = Math.floor(Math.random() * data.length);
+        const selectedProduct = data[randomIndex];
+
+        console.log("Producto obtenido con fallback:", selectedProduct);
+        return selectedProduct;
+      } catch (fallbackError) {
+        console.error("Fallback también falló:", fallbackError);
+        throw fallbackError;
+      }
     }
-    return product;
+  }
+
+  // Función de precarga mejorada
+  async function preloadNextProduct() {
+    if (isLoadingNextProduct) {
+      console.log("Ya hay una precarga en progreso, saltando...");
+      return;
+    }
+
+    try {
+      isLoadingNextProduct = true;
+      console.log("Precargando siguiente producto...");
+
+      productReserve = await getRandomProduct(productToGuess);
+      console.log("Producto precargado exitosamente:", productReserve);
+    } catch (error) {
+      console.error("Error al precargar producto:", error);
+      productReserve = null;
+    } finally {
+      isLoadingNextProduct = false;
+    }
   }
 
   function showScreen(screenToShow) {
@@ -178,19 +249,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   class AudioEngine {
     constructor() {
-      // 1. Crear el Contexto de Audio. Es el corazón de la Web Audio API.
-      // Se maneja el prefijo 'webkit' para máxima compatibilidad con Safari.
       this.audioContext = new (window.AudioContext ||
         window.webkitAudioContext)();
-      this.soundBuffers = {}; // Objeto para guardar los sonidos ya decodificados.
+      this.soundBuffers = {};
       this.isReady = false;
 
-      // Desbloquear el audio en iOS/Chrome con la primera interacción del usuario.
       const unlockAudio = () => {
         if (this.audioContext.state === "suspended") {
           this.audioContext.resume();
         }
-        // Remover el listener una vez que se ejecute.
         document.body.removeEventListener("touchstart", unlockAudio);
         document.body.removeEventListener("click", unlockAudio);
       };
@@ -198,17 +265,10 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.addEventListener("click", unlockAudio, { once: true });
     }
 
-    /**
-     * Carga un único archivo de audio, lo decodifica y lo guarda en el buffer.
-     * @param {string} name - El nombre clave para el sonido (ej: 'beep').
-     * @param {string} url - La URL completa del archivo de audio.
-     * @returns {Promise<AudioBuffer>}
-     */
     async loadSound(name, url) {
       try {
         const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
-        // Decodifica el archivo (MP3, WAV, etc.) a datos de audio puros.
         const audioBuffer = await this.audioContext.decodeAudioData(
           arrayBuffer
         );
@@ -219,12 +279,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    /**
-     * Carga una lista de sonidos y ejecuta una función cuando todo está listo.
-     * @param {object} soundPaths - Objeto con los nombres y rutas relativas de los sonidos.
-     * @param {string} hostUrl - La URL base para construir las rutas completas.
-     * @param {function} onReadyCallback - La función a llamar cuando todo esté cargado.
-     */
     async loadAllSounds(soundPaths, hostUrl, onReadyCallback) {
       const loadPromises = [];
       for (const name in soundPaths) {
@@ -243,42 +297,26 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    /**
-     * Reproduce un sonido desde el buffer.
-     * @param {string} name - El nombre del sonido a reproducir.
-     * @param {object} [options] - Opciones como volumen y velocidad.
-     * @param {number} [options.volume=1] - Volumen de 0.0 a 1.0 (o más).
-     * @param {number} [options.rate=1] - Velocidad de reproducción (1 = normal).
-     */
     play(name, options = {}) {
       if (!this.soundBuffers[name]) {
         console.warn(`Sonido "${name}" no encontrado o no cargado.`);
         return;
       }
 
-      // --- Creación de la cadena de nodos de audio ---
-
-      // 1. La fuente: El buffer con los datos del sonido.
       const source = this.audioContext.createBufferSource();
       source.buffer = this.soundBuffers[name];
       source.playbackRate.value = options.rate || 1;
 
-      // 2. El control de volumen: Un nodo de ganancia.
       const gainNode = this.audioContext.createGain();
       gainNode.gain.value = options.volume !== undefined ? options.volume : 1;
 
-      // 3. Conectar los nodos en una cadena: source -> gain -> speakers
       source.connect(gainNode);
       gainNode.connect(this.audioContext.destination);
 
-      // 4. ¡Reproducir!
       source.start(0);
     }
   }
 
-  // --- CÓMO USAR EL MOTOR DE AUDIO ---
-
-  // 1. Definir las rutas (como ya lo tenías)
   const hostUrl = "https://eduardojaoel.github.io/duelodeprecios/";
   const soundPaths = {
     charging: "audios/sfx-charging.mp3",
@@ -287,10 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
     beep: "audios/sfx-scanner-beep.mp3",
   };
 
-  // 2. Crear una instancia del motor.
   const audio = new AudioEngine();
-
-  // 3. Cargar todos los sonidos y definir qué hacer cuando estén listos.
   audio.loadAllSounds(soundPaths, hostUrl);
 
   // --- 5. Funciones de Actualización de UI ---
@@ -305,8 +340,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const priceToShow = showPrice
       ? `$${product.price.toFixed(2)}`
       : `<span class="char">?</span><span class="char">?</span><span class="char">?</span>`;
-    const displayTitle =
-      product.title || product.original_title || "Producto Desconocido";
+
+    const displayTitle = product.title || "Producto Desconocido";
     const displayBrand = product.brand || "";
     const displayCategory = product.category || "";
     const displayMeasure = product.measure || "";
@@ -338,7 +373,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `;
     container.appendChild(card);
-    gameArena.appendChild(container); // Añade al final
+    gameArena.appendChild(container);
 
     if (role == "guess") {
       document.getElementById("controls-product-label").textContent =
@@ -351,67 +386,66 @@ document.addEventListener("DOMContentLoaded", () => {
     currentScoreDisplay.textContent = currentScore;
   }
 
-  // --- 6. Lógica Principal del Juego ---
-  async function initializeGameData() {
-    isLoading = true;
-    playButton.disabled = true;
-    playButton.innerHTML = `<span>Empezar</span> <svg width="13" height="21" viewBox="0 0 13 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M12.9758 0.572754H0.97583V6.57275H2.97583V8.57275H4.97583V12.5728H2.97583V14.5728H0.97583V20.5728H12.9758V14.5728H10.9758V12.5728H8.97583V8.57275H10.9758V6.57275H12.9758V0.572754ZM10.9758 6.57275H8.97583V8.57275H4.97583V6.57275H2.97583V2.57275H10.9758V6.57275ZM8.97583 12.5728V14.5728H10.9758V18.5728H2.97583V14.5728H4.97583V12.5728H8.97583Z" fill="#023A50"/>
-</svg>
-`;
-    displayRandomIntroMessage();
-    loadHighScoreFromStorage();
-
+  // Función para obtener productos iniciales
+  async function getInitialProducts() {
     try {
-      const response = await fetch("data/test_products_v1.json"); // Asegúrate que esta sea la ruta correcta
-      if (!response.ok)
-        throw new Error(
-          `Error HTTP: ${response.status} al cargar products.json`
-        );
-      allProducts = await response.json();
+      console.log("Obteniendo 2 productos iniciales en una sola llamada...");
 
-      if (allProducts.length < 2) {
-        throw new Error("No hay suficientes productos para iniciar el juego.");
+      // Tu función ya puede devolver más de uno, ¡usémoslo!
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/get-random-products?count=2`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
-      setupFirstRound();
 
-      setTimeout(() => {
-        setGameArenaHeight();
-        isLoading = false;
-        playButton.disabled = false;
-        playButton.classList.remove("is-disabled");
-        playButton.innerHTML = `<span>Empezar</span> <svg width="17" height="21" viewBox="0 0 17 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.729 20.5728H0.729004V0.572754H4.729V3.07275H8.729V6.82275H12.729V9.32275H16.729V11.8228H12.729V14.3228H8.729V18.0728H4.729V20.5728Z" fill="#023A50"/></svg>`;
-      }, 500);
+      const data = await response.json();
+
+      // La respuesta debería tener un array 'products' con 2 elementos
+      if (!data.products || data.products.length < 2) {
+        throw new Error(
+          "No se pudieron obtener suficientes productos iniciales"
+        );
+      }
+
+      console.log("Productos iniciales obtenidos:", {
+        reference: data.products[0],
+        guess: data.products[1],
+      });
+
+      // Devolvemos los productos en el formato que el resto del código espera
+      return { reference: data.products[0], guess: data.products[1] };
     } catch (error) {
-      console.error("Error fatal al cargar los datos del juego:", error);
-      playButton.textContent = "Error al Cargar";
-      if (introTextElement)
-        introTextElement.textContent =
-          "Oops! No pudimos cargar los productos. Por favor, recarga la página.";
+      console.error("Error al obtener productos iniciales:", error);
+      // Aquí puedes mantener o mejorar tu lógica de fallback si lo deseas
+      throw error;
     }
   }
 
-  function setupFirstRound() {
-    productReference = getRandomProduct();
-    productToGuess = getRandomProduct(productReference);
-
+  // Configuración de la primera ronda
+  function setupFirstRoundWithProducts() {
     if (!productReference || !productToGuess) {
       console.error(
-        "No se pudieron obtener los productos iniciales para la primera ronda."
+        "No hay productos disponibles para configurar la primera ronda."
       );
-      playButton.textContent = "Error Productos";
-      playButton.disabled = true;
       return false;
     }
 
     productsGuessed = [];
-
-    gameArena.innerHTML = ""; // Limpiar arena por si acaso
+    gameArena.innerHTML = "";
 
     const refEl = addProductToArena(productReference, "reference", true);
     const guessEl = addProductToArena(productToGuess, "guess", false);
 
-    // Forzar reflujo para que las animaciones de entrada funcionen
     void refEl.offsetWidth;
     void guessEl.offsetWidth;
 
@@ -421,16 +455,62 @@ document.addEventListener("DOMContentLoaded", () => {
     return true;
   }
 
+  // --- 6. Lógica Principal del Juego ---
+  async function initializeGameData() {
+    isLoading = true;
+    playButton.disabled = true;
+    playButton.innerHTML = `<span>Cargando...</span> <svg width="13" height="21" viewBox="0 0 13 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12.9758 0.572754H0.97583V6.57275H2.97583V8.57275H4.97583V12.5728H2.97583V14.5728H0.97583V20.5728H12.9758V14.5728H10.9758V12.5728H8.97583V8.57275H10.9758V6.57275H12.9758V0.572754ZM10.9758 6.57275H8.97583V8.57275H4.97583V6.57275H2.97583V2.57275H10.9758V6.57275ZM8.97583 12.5728V14.5728H10.9758V18.5728H2.97583V14.5728H4.97583V12.5728H8.97583Z" fill="#023A50"/>
+</svg>
+`;
+
+    displayRandomIntroMessage();
+    loadHighScoreFromStorage();
+
+    try {
+      const { reference, guess } = await getInitialProducts();
+
+      if (!reference || !guess) {
+        throw new Error("No se pudieron obtener productos iniciales.");
+      }
+
+      productReference = reference;
+      productToGuess = guess;
+
+      allProducts = [];
+      productsGuessed = [];
+
+      setupFirstRoundWithProducts();
+
+      console.log("Precargando tercer producto...");
+      preloadNextProduct();
+
+      setTimeout(() => {
+        setGameArenaHeight();
+        isLoading = false;
+        playButton.disabled = false;
+        playButton.classList.remove("is-disabled");
+        playButton.innerHTML = `<span>Empezar</span> <svg width="17" height="21" viewBox="0 0 17 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.729 20.5728H0.729004V0.572754H4.729V3.07275H8.729V6.82275H12.729V9.32275H16.729V11.8228H12.729V14.3228H8.729V18.0728H4.729V20.5728Z" fill="#023A50"/></svg>`;
+      }, 500);
+    } catch (error) {
+      console.error("Error fatal al inicializar el juego:", error);
+      playButton.textContent = "Error al Cargar";
+      playButton.disabled = true;
+
+      if (introTextElement) {
+        introTextElement.textContent =
+          "Oops! No pudimos cargar los productos. Por favor, recarga la página.";
+      }
+    }
+  }
+
   function startGame() {
-    if (isLoading || allProducts.length < 2) {
-      console.warn("Los datos del juego no están listos o no son suficientes.");
+    if (isLoading) {
+      console.warn("Los datos del juego no están listos.");
       return;
     }
     currentScore = 0;
     updateCurrentScoreDisplay();
-    /* if (!setupFirstRound()) {
-      return; // No iniciar si la configuración falla
-    } */
     canGuess = true;
     showScreen(gameScreen);
   }
@@ -577,9 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(animationFrame);
   }
 
-  /* const testElement = document.querySelector(".rainbow-text"); */
-
-  function handleGuess(guess) {
+  async function handleGuess(guess) {
     if (!canGuess || !productReference || !productToGuess) return;
     canGuess = false;
 
@@ -595,21 +673,17 @@ document.addEventListener("DOMContentLoaded", () => {
       canGuess = true;
       return;
     }
+
     const currentGuessCard = currentGuessElement.querySelector(".product-card");
     const priceElement = currentGuessCard.querySelector(
       ".product-price .price-value"
     );
-
-    /* priceElement.textContent = `$${productToGuess.price.toFixed(2)}`;
-    currentGuessCard.querySelector(".product-price").classList.add("revealed"); */
 
     const isHigher = productToGuess.price > productReference.price;
     const pricesAreEqual = productToGuess.price === productReference.price;
     let isCorrect = pricesAreEqual
       ? true
       : (guess === "higher" && isHigher) || (guess === "lower" && !isHigher);
-
-    /* currentGuessCard.classList.add(isCorrect ? "correct-guess" : "wrong-guess"); */
 
     animatePriceReveal(
       0.0,
@@ -634,7 +708,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setDateAndTime();
     }
 
-    setTimeout(() => {
+    setTimeout(async () => {
       currentGuessCard.classList.remove("correct-guess", "wrong-guess");
 
       if (isCorrect) {
@@ -645,42 +719,42 @@ document.addEventListener("DOMContentLoaded", () => {
         audio.play("beep");
 
         outOfViewElements.push(currentReferenceElement);
-
         setGameArenaTranslate();
 
         currentReferenceElement.classList.remove("in-view");
         currentReferenceElement.classList.add("out-view");
         setTimeout(() => {
           setGameArenaHeight();
-          if (currentReferenceElement.parentNode) {
-            // Chequeo extra
-            /* currentReferenceElement.remove(); */
+        }, 500);
+
+        currentGuessElement.dataset.productRole = "reference";
+        productReference = productToGuess;
+
+        try {
+          if (productReserve) {
+            console.log("Usando producto precargado");
+            productToGuess = productReserve;
+            productReserve = null;
+
+            preloadNextProduct();
+
+            const newGuessElement = addProductToArena(
+              productToGuess,
+              "guess",
+              false
+            );
+            void newGuessElement.offsetWidth;
+            newGuessElement.classList.add("in-view");
+
+            preloadNextProduct();
+
+            canGuess = true;
           }
-        }, 500); // Tiempo para animación de salida
-
-        currentGuessElement.dataset.productRole = "reference"; // El que se adivinó, ahora es referencia
-        // No necesitamos quitar y poner 'in-view' si ya está y se queda.
-
-        productReference = productToGuess; // El B anterior es el nuevo A
-        productToGuess = getRandomProduct(productReference); // Nuevo B
-
-        if (!productToGuess) {
-          console.log(
-            "Se acabaron los productos o no se pudo encontrar uno nuevo para adivinar."
-          );
+        } catch (error) {
+          console.error("Error crítico al obtener nuevo producto:", error);
+          console.log("No se pudo obtener más productos, terminando juego...");
           triggerGameOver();
-          return;
         }
-
-        const newGuessElement = addProductToArena(
-          productToGuess,
-          "guess",
-          false
-        );
-        void newGuessElement.offsetWidth; // Forzar reflujo
-        newGuessElement.classList.add("in-view");
-
-        canGuess = true;
       } else {
         triggerGameOver();
       }
@@ -690,14 +764,31 @@ document.addEventListener("DOMContentLoaded", () => {
   function setGameArenaHeight() {
     const productsInView = document.querySelectorAll(".in-view");
 
+    if (productsInView.length === 0) {
+      gameArena.style.height = "400px";
+      return;
+    }
+
     gameArenaHeight = 0;
 
     productsInView.forEach((productInView) => {
-      gameArenaHeight += productInView.offsetHeight;
+      if (productInView.offsetHeight > 0) {
+        gameArenaHeight += productInView.offsetHeight;
+      }
     });
 
-    gameArena.style.height = `calc(${gameArenaHeight}px + 10px) `;
+    if (gameArenaHeight === 0) {
+      const estimatedProductHeight = 300;
+      gameArenaHeight = productsInView.length * estimatedProductHeight;
+      console.log(
+        "Usando altura estimada para el game arena:",
+        gameArenaHeight
+      );
+    }
+
+    gameArena.style.height = `calc(${gameArenaHeight}px + 10px)`;
   }
+
   function setGameArenaTranslate() {
     let outOfViewHeight = 0;
 
@@ -723,37 +814,25 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Enviando datos de partida a Supabase:", gameData);
 
     try {
-      const response = await fetch(SUPABASE_FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify(gameData),
+      const { data, error } = await supabase.functions.invoke("log-score", {
+        body: gameData,
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Partida registrada exitosamente en Supabase:", result);
+      if (error) {
+        console.error("Error al registrar la partida en Supabase:", error);
+      } else {
+        console.log("Partida registrada exitosamente en Supabase:", data);
 
-        if (invoiceNumberValue) {
-          const responseId = result.data.id;
+        if (invoiceNumberValue && data.id !== undefined) {
+          const responseId = data.id;
           const idFormatted = "DDP" + responseId.toString().padStart(8, "0");
           invoiceNumberValue.textContent = idFormatted;
+        } else {
+          console.warn(
+            "El id no está presente en la respuesta de la Edge Function:",
+            data
+          );
         }
-      } else {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch (e) {
-          errorData = await response.text(); // Fallback si el error no es JSON
-        }
-        console.error(
-          "Error al registrar la partida en Supabase:",
-          response.status,
-          response.statusText,
-          errorData
-        );
       }
     } catch (error) {
       console.error(
@@ -776,38 +855,52 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log(productsGuessed);
   }
 
-  function restartGame() {
-    loadHighScoreFromStorage();
-    displayRandomIntroMessage();
-    startGame();
-    outOfViewElements = [];
-    setGameArenaTranslate();
-    setTimeout(() => {
-      setGameArenaHeight();
-    }, 500);
-    showScreen(gameScreen);
+  async function restartGame() {
+    currentScore = 0;
+    updateCurrentScoreDisplay();
     productsGuessed = [];
+    productReserve = null;
+    isLoadingNextProduct = false;
+    outOfViewElements = [];
+    canGuess = false;
 
+    loadHighScoreFromStorage();
     scoreFlamme.style.display = "none";
 
-    // El botón Play se habilitará o mostrará error basado en el estado de carga
-    if (!isLoading && allProducts.length >= 2) {
-      setupFirstRound();
-      playButton.disabled = false;
-      playButton.innerHTML = `<span>Empezar</span> <svg width="17" height="21" viewBox="0 0 17 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.729 20.5728H0.729004V0.572754H4.729V3.07275H8.729V6.82275H12.729V9.32275H16.729V11.8228H12.729V14.3228H8.729V18.0728H4.729V20.5728Z" fill="#023A50"/></svg>`;
-    } else if (!isLoading && allProducts.length < 2) {
-      playButton.textContent = "Error Productos";
-      playButton.disabled = true;
-    } else {
-      // Todavía cargando o error inicial no resuelto
-      playButton.innerHTML = `<span>Empezar</span> <svg width="13" height="21" viewBox="0 0 13 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M12.9758 0.572754H0.97583V6.57275H2.97583V8.57275H4.97583V12.5728H2.97583V14.5728H0.97583V20.5728H12.9758V14.5728H10.9758V12.5728H8.97583V8.57275H10.9758V6.57275H12.9758V0.572754ZM10.9758 6.57275H8.97583V8.57275H4.97583V6.57275H2.97583V2.57275H10.9758V6.57275ZM8.97583 12.5728V14.5728H10.9758V18.5728H2.97583V14.5728H4.97583V12.5728H8.97583Z" fill="#023A50"/>
-</svg>
-`;
-      playButton.disabled = true;
-      // Se podría re-intentar initializeGameData() aquí si fuera una condición de error recuperable
-      // pero para un reinicio simple, usualmente se asume que los datos ya están.
-      // Si los datos fallaron al cargar inicialmente, initializeGameData ya lo marcó.
+    showScreen(gameScreen);
+
+    gameArena.innerHTML = "";
+    gameArena.style.transform = "translateY(0)";
+    setGameArenaTranslate();
+
+    try {
+      console.log("Cargando productos para nuevo juego...");
+
+      const { reference, guess } = await getInitialProducts();
+
+      if (!reference || !guess) {
+        throw new Error("No se pudieron obtener productos para reiniciar");
+      }
+
+      productReference = reference;
+      productToGuess = guess;
+
+      setupFirstRoundWithProducts();
+
+      console.log("Precargando tercer producto...");
+      preloadNextProduct();
+
+      setTimeout(() => {
+        setGameArenaHeight();
+        canGuess = true;
+      }, 500);
+    } catch (error) {
+      console.error("Error al cargar productos para nuevo juego:", error);
+      showScreen(startScreen);
+      displayRandomIntroMessage();
+      if (introTextElement) {
+        introTextElement.textContent = "Error al reiniciar. Intenta de nuevo.";
+      }
     }
   }
 
