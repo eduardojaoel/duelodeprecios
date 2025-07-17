@@ -1,7 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  // --- 1. Referencias a Elementos del DOM ---
   const startScreen = document.getElementById("start-screen");
   const gameScreen = document.getElementById("game-screen");
   const gameOverScreen = document.getElementById("game-over-screen");
@@ -24,16 +23,15 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   const playAgainButton = document.getElementById("play-again-button");
 
-  // --- 2. Variables Globales y Constantes del Juego ---
   let productReference = null;
   let productToGuess = null;
-  let productReserve = null; // Producto precargado para la siguiente ronda
+  let productReserve = null;
   let shownProducts = [];
   let currentScore = 0;
   let highScore = 0;
   let canGuess = true;
   let isLoading = true;
-  let isLoadingNextProduct = false; // Flag para controlar la precarga
+  let isLoadingNextProduct = false;
   let outOfViewElements = [];
 
   const now = new Date();
@@ -47,7 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const SUPABASE_URL = "https://ooatrkqiysrrwijbchej.supabase.co";
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // --- 3. Mensajes de Introducción ---
   const introMessages = [
     "Nadie se ha hecho millonario jugando a esto (que sepamos). Pero la gloria en Duelo de Precios... esa es otra historia. ¿La escribes?",
     "Si tuvieras un superpoder, ¿sería adivinar precios? Pues aquí puedes probar esa teoría. (No requiere capa).",
@@ -63,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- 4. Funciones de Utilidad ---
   function loadHighScoreFromStorage() {
     highScore = parseInt(localStorage.getItem(HIGH_SCORE_KEY)) || 0;
     highScoreDisplay.forEach((display) => {
@@ -114,14 +110,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (invoiceTimeValue) invoiceTimeValue.textContent = getTime();
   }
 
-  // <<<<<<<<<--------- FUNCIÓN MODIFICADA PARA USAR RPC --------->>>>>>>>>>>
   async function getRandomProduct(excludeProduct = null) {
     try {
-      // Esta función ahora solo se usará para obtener el producto de reserva (1 solo)
-      console.log("Pidiendo siguiente producto de forma segura vía RPC...");
       const excludeId = excludeProduct ? excludeProduct.id : null;
 
-      // Llamamos a la nueva función RPC segura que creamos
       const { data, error } = await supabase.rpc("get_secure_random_product", {
         exclude_product_id: excludeId,
       });
@@ -136,9 +128,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
       }
 
-      console.log("Siguiente producto seguro obtenido:", data[0]);
-
-      // La función devuelve un array con un solo elemento
       return data[0];
     } catch (error) {
       console.error("Error al llamar a get_secure_random_product:", error);
@@ -150,9 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isLoadingNextProduct) return;
     try {
       isLoadingNextProduct = true;
-      console.log("Precargando siguiente producto...");
       productReserve = await getRandomProduct(productToGuess, 1);
-      console.log("Producto precargado exitosamente:", productReserve);
     } catch (error) {
       console.error("Error al precargar producto:", error);
       productReserve = null;
@@ -223,7 +210,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "https://www.duelodeprecios.com/"
   );
 
-  // --- 5. Funciones de Actualización de UI ---
   function addProductToArena(product, role, showPrice) {
     const container = document.createElement("div");
     container.className = "product-display-container";
@@ -271,20 +257,13 @@ document.addEventListener("DOMContentLoaded", () => {
     currentScoreDisplay.textContent = currentScore;
   }
 
-  // <<<<<<<<<--------- FUNCIÓN OPTIMIZADA PARA OBTENER PRODUCTOS INICIALES --------->>>>>>>>>>>
   async function getInitialProducts() {
     try {
-      console.log("Obteniendo productos iniciales de forma segura...");
-
-      // Llamamos a la nueva función que no necesita parámetros
       const { data, error } = await supabase.rpc("get_game_start_products");
 
       if (error) {
         throw error;
       }
-
-      // La 'data' ya es el objeto { reference: {...}, guess: {...} } que necesitamos
-      console.log("Productos iniciales seguros obtenidos:", data);
       return data;
     } catch (error) {
       console.error("Error al obtener productos iniciales:", error);
@@ -314,28 +293,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     downloadButton.addEventListener("click", () => {
-      const playAgainBtn = document.getElementById("play-again-button");
       downloadButton.style.display = "none";
 
-      // --- CAMBIO PRINCIPAL: Usamos domtoimage.toPng ---
       domtoimage
         .toPng(invoiceElement, {
-          bgcolor: "#022C40", // Asigna el color de fondo de tu juego
+          bgcolor: "#022C40",
           quality: 1,
         })
         .then(function (dataUrl) {
-          // La librería devuelve la URL de la imagen directamente, ¡más fácil!
           const link = document.createElement("a");
           link.href = dataUrl;
           link.download = "duelo-de-precios_score.png";
           link.click();
-
-          // Volvemos a mostrar los botones
           downloadButton.style.display = "block";
         })
         .catch(function (error) {
           console.error("Oops, algo salió mal con dom-to-image!", error);
-          // Nos aseguramos de que los botones se muestren de nuevo si hay un error
           downloadButton.style.display = "block";
         });
     });
@@ -346,26 +319,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!shareButton) return;
 
     shareButton.addEventListener("click", () => {
-      // Preparamos el texto y los datos a compartir
       const shareData = {
         title: "Duelo de Precios",
         text: `¡Hice ${currentScore} puntos en Duelo de Precios! ¿Puedes superarme?`,
-        url: window.location.href, // O la URL principal de tu juego
+        url: window.location.href,
       };
 
-      // Intentamos usar la Web Share API primero
       if (navigator.share) {
         navigator
           .share(shareData)
-          .then(() => console.log("Puntaje compartido."))
           .catch((error) => console.error("Error al compartir:", error));
       } else {
-        // Si no es compatible, copiamos al portapapeles
         const fallbackText = `${shareData.text} ${shareData.url}`;
         navigator.clipboard
           .writeText(fallbackText)
           .then(() => {
-            // Damos feedback al usuario
             const originalText = shareButton.textContent;
             shareButton.querySelector("span").textContent = "¡COPIADO!";
             setTimeout(() => {
@@ -379,7 +347,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- 6. Lógica Principal del Juego ---
   async function initializeGameData() {
     isLoading = true;
     playButton.disabled = true;
@@ -448,7 +415,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const wrongIcon = `<svg class="validation-icon" width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0.75 0.25H3.25V2.75H0.75V0.25ZM5.75 5.25H3.25V2.75H5.75V5.25ZM8.25 7.75H5.75V5.25H8.25V7.75ZM10.75 7.75H8.25V10.25H5.75V12.75H3.25V15.25H0.75V17.75H3.25V15.25H5.75V12.75H8.25V10.25H10.75V12.75H13.25V15.25H15.75V17.75H18.25V15.25H15.75V12.75H13.25V10.25H10.75V7.75ZM13.25 5.25V7.75H10.75V5.25H13.25ZM15.75 2.75V5.25H13.25V2.75H15.75ZM15.75 2.75V0.25H18.25V2.75H15.75Z" fill="#FF6C6C"/></svg>`;
     const checkIcon = `<svg class="validation-icon" width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.5 0.5H20V3H17.5V0.5ZM15 5.5V3H17.5V5.5H15ZM12.5 8V5.5H15V8H12.5ZM10 10.5H12.5V8H10V10.5ZM7.5 13H10V10.5H7.5V13ZM5 13V15.5H7.5V13H5ZM2.5 10.5H5V13H2.5V10.5ZM2.5 10.5H0V8H2.5V10.5Z" fill="#81FF6C"/></svg>`;
 
-    // La lógica visual para la animación
     const isVisuallyCorrect =
       (guess === "higher" && finalValueNum > productReferencePrice) ||
       (guess === "lower" && finalValueNum < productReferencePrice) ||
@@ -466,7 +432,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (progress < 1) {
         requestAnimationFrame(animationFrame);
       } else if (!validated) {
-        // Se ejecuta solo una vez al final
         validated = true;
         priceElement.parentNode.classList.add(
           isVisuallyCorrect ? "good-guess" : "wrong-guess"
@@ -526,7 +491,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       productCard.classList.remove("is-charging");
 
-      // Llamada correcta a tu animación original
       animatePriceReveal(
         0.0,
         actual_price,
@@ -537,7 +501,6 @@ document.addEventListener("DOMContentLoaded", () => {
         productReference.price
       );
 
-      // La lógica del juego sigue dependiendo del 'is_correct' del servidor
       setTimeout(() => {
         if (is_correct) {
           currentScore++;
@@ -611,8 +574,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }px))`;
   }
 
-  // Reemplaza la función logScoreToDB en tu script.js con esta versión
-
   async function logScoreToDB() {
     const gameData = {
       score: currentScore,
@@ -621,10 +582,7 @@ document.addEventListener("DOMContentLoaded", () => {
       timestamp: new Date().toISOString(),
     };
 
-    console.log("Enviando datos de partida vía RPC:", gameData);
-
     try {
-      // Llamada RPC para registrar el puntaje de forma segura y directa
       const { data: newId, error } = await supabase.rpc("log_game_session", {
         p_score: gameData.score,
         p_player_id: gameData.playerId,
@@ -636,11 +594,8 @@ document.addEventListener("DOMContentLoaded", () => {
         throw error;
       }
 
-      console.log("Partida registrada exitosamente con ID:", newId);
-
       const invoiceNumEl = document.getElementById("invoice-number-value");
 
-      // La llamada RPC devuelve el ID directamente
       if (invoiceNumEl && newId) {
         invoiceNumEl.textContent = "DDP" + String(newId).padStart(8, "0");
       }
@@ -658,7 +613,6 @@ document.addEventListener("DOMContentLoaded", () => {
       0
     );
 
-    // El producto que se falló no se añade a 'shownProducts', así que lo sumamos al final.
     const finalTotal = totalSum + (productToGuess.price || 0);
 
     const totalValueElement = document.getElementById(
@@ -706,7 +660,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- 7. Asignación de Event Listeners ---
   playButton.addEventListener("click", startGame);
   higherButton.addEventListener("click", () => handleGuess("higher"));
   lowerButton.addEventListener("click", () => handleGuess("lower"));
@@ -716,7 +669,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setGameArenaTranslate();
   });
 
-  // --- 8. ¡Empieza Todo! ---
   initializeGameData();
   setupDownloadButton();
   setupShareButton();
