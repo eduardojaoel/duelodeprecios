@@ -103,9 +103,6 @@
             <span>Tu Record: </span><span class="high-score-value">0</span
             ><span> Puntos</span>
           </p>
-          <!-- <button id="play-button" class="play-button" disabled>
-            Cargando...
-          </button> -->
 
           <button
             id="play-button"
@@ -329,12 +326,6 @@
             <div class="invoice-line"></div>
             <p class="invoice-centered-text invoice-url">duelodeprecios.com</p>
           </div>
-
-          <!-- <span id="final-score" class="final-score">0</span>
-          <p class="final-score-text">Tu Puntaje</p>
-
-          <span id="game-over-high-score" class="game-over-high-score">0</span>
-          <p class="high-score-text">Record</p> -->
           <div class="invoice-buttons-wrapper">
             <button id="play-again-button" class="nes-btn play-again-button">
               <svg
@@ -385,26 +376,5 @@
 
     <script src="js/dom-to-image-more.min.js" defer></script>
     <script type="module" src="js/script.js" defer></script>
-
-    <!-- <script type="module">
-      import { createClient } from "https://esm.sh/@supabase/supabase-js";
-
-      const supabaseUrl = "https://ooatrkqiysrrwijbchej.supabase.co";
-      const supabaseKey =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vYXRya3FpeXNycndpamJjaGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4OTI1ODgsImV4cCI6MjA2NDQ2ODU4OH0.SJB5Rc323ASOebF-aBdZVd9SZg5QXUXeyo4zj3FMWqg";
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      async function getGames() {
-        const { data, error } = await supabase.from("products").select();
-
-        if (error) {
-          console.error(error);
-        } else {
-          console.log(data);
-        }
-      }
-
-      getGames();
-    </script> -->
   </body>
 </html>

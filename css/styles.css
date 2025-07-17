@@ -452,25 +452,42 @@ body {
   }
 }
 
-.price-value .char {
-  display: inline-block;
-  animation-name: wave-up;
-  animation-duration: 1s; /* Duración de la subida y bajada de un carácter */
-  animation-timing-function: ease-in-out; /* Para un movimiento suave */
-  animation-iteration-count: infinite; /* La animación se ejecuta una vez por carácter */
-  /* Cambia a 'infinite' si quieres que la ola se repita continuamente */
-  animation-fill-mode: forwards; /* Mantiene el estado del último keyframe (translateY(0)) */
+@keyframes accent-glow {
+  0%,
+  100% {
+    color: #e8ff6c; /* Normal */
+  }
+  25% {
+    color: #f5ffc9; /* Más brillante */
+  }
+  50% {
+    color: #e8ff6c; /* Normal */
+  }
+  75% {
+    color: #a8c050; /* Ligeramente más opaco */
+  }
 }
 
-/* Aplicamos retrasos para crear el efecto de ola */
+/* 2. (MODIFICADO) Aplica la nueva animación 'accent-glow' */
+.price-value .char {
+  display: inline-block;
+
+  /* Se aplican las dos animaciones separadas por una coma */
+  animation-name: wave-up, accent-glow;
+  animation-duration: 1s, 6s; /* 1s para la ola, 6s para el ciclo de color */
+  animation-timing-function: ease-in-out, linear;
+  animation-iteration-count: infinite, infinite;
+}
+
+/* 3. (Sin cambios) Los retrasos se siguen aplicando solo a la animación 'wave-up' */
 .price-value .char:nth-child(1) {
-  animation-delay: 0s;
+  animation-delay: 0s, 0s;
 }
 .price-value .char:nth-child(2) {
-  animation-delay: 0.15s; /* El segundo empieza un poco después */
+  animation-delay: 0.15s, 0s;
 }
 .price-value .char:nth-child(3) {
-  animation-delay: 0.3s; /* El tercero empieza después del segundo */
+  animation-delay: 0.3s, 0s;
 }
 
 .game-over-screen:not(.active) {
