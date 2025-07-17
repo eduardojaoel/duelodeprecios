@@ -302,11 +302,88 @@ document.addEventListener("DOMContentLoaded", () => {
     return true;
   }
 
+  function setupDownloadButton() {
+    const downloadButton = document.getElementById("download-button");
+    const invoiceElement = document.querySelector(".invoice-wrapper");
+
+    if (!downloadButton || !invoiceElement) {
+      console.error(
+        "No se encontraron el botón de descarga o el elemento de la factura."
+      );
+      return;
+    }
+
+    downloadButton.addEventListener("click", () => {
+      const playAgainBtn = document.getElementById("play-again-button");
+      downloadButton.style.display = "none";
+
+      // --- CAMBIO PRINCIPAL: Usamos domtoimage.toPng ---
+      domtoimage
+        .toPng(invoiceElement, {
+          bgcolor: "#022C40", // Asigna el color de fondo de tu juego
+          quality: 1,
+        })
+        .then(function (dataUrl) {
+          // La librería devuelve la URL de la imagen directamente, ¡más fácil!
+          const link = document.createElement("a");
+          link.href = dataUrl;
+          link.download = "factura-duelo-de-precios.png";
+          link.click();
+
+          // Volvemos a mostrar los botones
+          downloadButton.style.display = "block";
+        })
+        .catch(function (error) {
+          console.error("Oops, algo salió mal con dom-to-image!", error);
+          // Nos aseguramos de que los botones se muestren de nuevo si hay un error
+          downloadButton.style.display = "block";
+        });
+    });
+  }
+
+  function setupShareButton() {
+    const shareButton = document.getElementById("share-button");
+    if (!shareButton) return;
+
+    shareButton.addEventListener("click", () => {
+      // Preparamos el texto y los datos a compartir
+      const shareData = {
+        title: "Duelo de Precios",
+        text: `¡Hice ${currentScore} puntos en Duelo de Precios! ¿Puedes superarme?`,
+        url: window.location.href, // O la URL principal de tu juego
+      };
+
+      // Intentamos usar la Web Share API primero
+      if (!navigator.share) {
+        navigator
+          .share(shareData)
+          .then(() => console.log("Puntaje compartido."))
+          .catch((error) => console.error("Error al compartir:", error));
+      } else {
+        // Si no es compatible, copiamos al portapapeles
+        const fallbackText = `${shareData.text} ${shareData.url}`;
+        navigator.clipboard
+          .writeText(fallbackText)
+          .then(() => {
+            // Damos feedback al usuario
+            const originalText = shareButton.textContent;
+            shareButton.querySelector("span").textContent = "¡COPIADO!";
+            setTimeout(() => {
+              shareButton.querySelector("span").textContent = originalText;
+            }, 2000);
+          })
+          .catch((err) => {
+            console.error("Error al copiar texto:", err);
+          });
+      }
+    });
+  }
+
   // --- 6. Lógica Principal del Juego ---
   async function initializeGameData() {
     isLoading = true;
     playButton.disabled = true;
-    playButton.classList.remove("is-disabled");
+    playButton.classList.add("is-disabled");
     playButton.innerHTML = `<span>Cargando...</span> <svg width="13" height="21" viewBox="0 0 13 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.9758 0.572754H0.97583V6.57275H2.97583V8.57275H4.97583V12.5728H2.97583V14.5728H0.97583V20.5728H12.9758V14.5728H10.9758V12.5728H8.97583V8.57275H10.9758V6.57275H12.9758V0.572754ZM10.9758 6.57275H8.97583V8.57275H4.97583V6.57275H2.97583V2.57275H10.9758V6.57275ZM8.97583 12.5728V14.5728H10.9758V18.5728H2.97583V14.5728H4.97583V12.5728H8.97583Z" fill="#023A50"/></svg>`;
     displayRandomIntroMessage();
     loadHighScoreFromStorage();
@@ -315,13 +392,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await getInitialProducts();
       productReference = data.reference;
       productToGuess = data.guess;
-      shownProducts = [productReference, productToGuess];
+      shownProducts = [productToGuess];
       setupFirstRoundWithProducts();
       await preloadNextProduct();
 
       setGameArenaHeight();
       isLoading = false;
       playButton.disabled = false;
+      playButton.classList.remove("is-disabled");
       playButton.innerHTML = `<span>Empezar</span> <svg width="17" height="21" viewBox="0 0 17 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.729 20.5728H0.729004V0.572754H4.729V3.07275H8.729V6.82275H12.729V9.32275H16.729V11.8228H12.729V14.3228H8.729V18.0728H4.729V20.5728Z" fill="#023A50"/></svg>`;
     } catch (error) {
       console.error("Error fatal al inicializar:", error);
@@ -612,7 +690,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await getInitialProducts();
       productReference = data.reference;
       productToGuess = data.guess;
-      shownProducts = [productReference, productToGuess];
+      shownProducts = [productToGuess];
       setupFirstRoundWithProducts();
       await preloadNextProduct();
       setGameArenaHeight();
@@ -637,4 +715,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- 8. ¡Empieza Todo! ---
   initializeGameData();
+  setupDownloadButton();
+  setupShareButton();
 });

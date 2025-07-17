@@ -175,6 +175,23 @@
 
         <div class="game-over-screen-content" id="game-over-screen-content">
           <div class="invoice-wrapper">
+            <button
+              id="download-button"
+              class="nes-btn nes-secondary download-button"
+            >
+              <svg
+                width="19"
+                height="19"
+                viewBox="0 0 19 19"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M10.5818 14.1096V0.109619H8.58179V10.1096H6.58179V8.10962H4.58179V10.1096H6.58179V12.1096H8.58179V14.1096H10.5818ZM18.5818 16.1096V12.1096H16.5818V16.1096H2.58179V12.1096H0.581787V18.1096H18.5818V16.1096ZM10.5818 10.1096V12.1096H12.5818V10.1096H14.5818V8.10962H12.5818V10.1096H10.5818Z"
+                  fill="#CDCDCD"
+                />
+              </svg>
+            </button>
             <div class="invoice-logo-wrapper">
               <svg
                 width="215"
@@ -303,13 +320,48 @@
 
           <span id="game-over-high-score" class="game-over-high-score">0</span>
           <p class="high-score-text">Record</p> -->
-          <button id="play-again-button" class="nes-btn play-again-button">
-            Jugar de Nuevo
-          </button>
+          <div class="invoice-buttons-wrapper">
+            <button id="play-again-button" class="nes-btn play-again-button">
+              <svg
+                width="18"
+                height="23"
+                viewBox="0 0 18 23"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 0.911133H6V2.91113H8V4.91113H2V6.91113H0V16.9111H2V18.9111H4V16.9111H2V6.91113H8V8.91113H6V10.9111H8V8.91113H10V6.91113H12V4.91113H10V2.91113H8V0.911133ZM16 4.91113H14V6.91113H16V16.9111H10V14.9111H12V12.9111H10V14.9111H8V16.9111H6V18.9111H8V20.9111H10V22.9111H12V20.9111H10V18.9111H16V16.9111H18V6.91113H16V4.91113Z"
+                  fill="#023A50"
+                />
+              </svg>
+              <span>Jugar de Nuevo</span>
+            </button>
+
+            <button
+              id="share-button"
+              class="nes-btn nes-secondary share-button"
+            >
+              <svg
+                width="21"
+                height="13"
+                viewBox="0 0 21 13"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M2.58179 0.911133H9.58179V2.91113H2.58179V10.9111H9.58179V12.9111H0.581787V0.911133H2.58179ZM18.5818 0.911133H11.5818V2.91113H18.5818V10.9111H11.5818V12.9111H20.5818V0.911133H18.5818ZM15.5818 5.91113H5.58179V7.91113H15.5818V5.91113Z"
+                  fill="#CDCDCD"
+                />
+              </svg>
+
+              <span>Compartir</span>
+            </button>
+          </div>
         </div>
       </section>
     </main>
 
+    <script src="js/dom-to-image-more.min.js" defer></script>
     <script type="module" src="js/script.js" defer></script>
 
     <!-- <script type="module">
