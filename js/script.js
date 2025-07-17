@@ -387,6 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
     playButton.innerHTML = `<span>Cargando...</span> <svg width="13" height="21" viewBox="0 0 13 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.9758 0.572754H0.97583V6.57275H2.97583V8.57275H4.97583V12.5728H2.97583V14.5728H0.97583V20.5728H12.9758V14.5728H10.9758V12.5728H8.97583V8.57275H10.9758V6.57275H12.9758V0.572754ZM10.9758 6.57275H8.97583V8.57275H4.97583V6.57275H2.97583V2.57275H10.9758V6.57275ZM8.97583 12.5728V14.5728H10.9758V18.5728H2.97583V14.5728H4.97583V12.5728H8.97583Z" fill="#023A50"/></svg>`;
     displayRandomIntroMessage();
     loadHighScoreFromStorage();
+    document.body.classList.add("disable-scroll");
 
     try {
       const data = await getInitialProducts();
@@ -414,6 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isLoading) return;
     currentScore = 0;
     updateCurrentScoreDisplay();
+    document.body.classList.remove("disable-scroll");
     canGuess = true;
     showScreen(gameScreen);
   }
@@ -694,6 +696,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setupFirstRoundWithProducts();
       await preloadNextProduct();
       setGameArenaHeight();
+      document.body.classList.remove("disable-scroll");
       canGuess = true;
     } catch (error) {
       console.error("Error restarting game:", error);

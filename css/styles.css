@@ -836,3 +836,6 @@ a {
 #contact-form-status {
   color: var(--color-accent);
 }
+.disable-scroll {
+  overflow: hidden;
+}
