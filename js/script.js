@@ -354,7 +354,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       // Intentamos usar la Web Share API primero
-      if (!navigator.share) {
+      if (navigator.share) {
         navigator
           .share(shareData)
           .then(() => console.log("Puntaje compartido."))
