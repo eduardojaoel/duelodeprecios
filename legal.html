@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Duelo de Precios - ¿Cuesta Más o Menos?</title>
+    <meta
+      name="description"
+      content="¡Juega Duelo de Precios al estilo arcade! Adivina si el precio del siguiente producto es más alto o más bajo y consigue el mayor puntaje. ¡Gratis y divertido!"
+    />
+    <meta
+      name="keywords"
+      content="higher or lower, mas alto o mas bajo, juego, arcade, precios, adivinar, gratis, pasatiempo, puntaje, duelo de precios"
+    />
+    <!--
+      <link rel="icon" href="favicon.ico" sizes="any" />
+      <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+      <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+      <meta
+        property="og:title"
+        content="Higher or Lower Arcade - ¡Desafío de Precios!"
+      />
+      <meta
+        property="og:description"
+        content="¿Podrás adivinar si el producto es más caro o más barato? ¡Pon a prueba tu instinto y consigue el High Score!"
+      />
+      <meta
+        property="og:image"
+        content="https://tu-usuario.github.io/tu-juego/images/social-preview.png"
+      />
+      <meta property="og:url" content="https://tu-usuario.github.io/tu-juego/" />
+      <meta property="og:type" content="website" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta
+        name="twitter:title"
+        content="Higher or Lower Arcade - ¡Desafío de Precios!"
+      />
+      <meta
+        name="twitter:description"
+        content="¿Podrás adivinar si el producto es más caro o más barato? ¡Pon a prueba tu instinto y consigue el High Score!"
+      />
+      <meta
+        name="twitter:image"
+        content="https://tu-usuario.github.io/tu-juego/images/social-preview.png"
+      />
+    -->
+    <link rel="stylesheet" href="fonts/fonts.css" />
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <h1 class="visually-hidden">Duelo de Precios</h1>
+    <header class="header section-width standard-logo-header">
+      <svg
+        class="standard-logo"
+        id="logo"
+        width="217"
+        height="71"
+        aria-label="Logo de Duelo de Precios"
+      >
+        <use href="assets/logo.svg#logo"></use>
+      </svg>
+    </header>
+
+    <main class="main-content legal-container">
+      <a class="return-to-game" href="/">Volver al Juego</a>
+      <h1>Aviso Legal y Términos de Uso</h1>
+      <p class="update-date">
+        <strong>Última actualización:</strong> 17 de julio de 2025
+      </p>
+
+      <p>
+        Este documento rige el uso del sitio web y el juego "Duelo de Precios"
+        (en adelante, "el Sitio Web"). Al acceder y utilizar nuestro Sitio Web,
+        usted acepta estar sujeto a los siguientes términos y condiciones.
+      </p>
+
+      <h2>1. Objeto del Sitio Web</h2>
+      <p>
+        El Sitio Web es un juego con fines recreativos y de entretenimiento,
+        cuyo objetivo es adivinar si el precio de un producto es más alto o más
+        bajo que el de un producto de referencia.
+      </p>
+
+      <h2>2. Propiedad Intelectual</h2>
+      <p>
+        Las imágenes, nombres y descripciones de productos que se muestran en el
+        Sitio Web han sido recopilados de fuentes de acceso público, como
+        supermercados locales, con el único propósito de proporcionar una
+        experiencia de juego justa e informativa.
+      </p>
+      <p>
+        Respetamos los derechos de propiedad intelectual. Si usted es el
+        propietario de los derechos de autor de cualquier contenido utilizado
+        aquí y considera que su uso infringe sus derechos, por favor,
+        contáctenos a través del correo electrónico proporcionado al final de
+        este documento para solicitar su pronta eliminación.
+      </p>
+
+      <h2>3. Política de Privacidad</h2>
+      <p>
+        Nos tomamos su privacidad en serio. Esta sección describe qué datos
+        recopilamos y por qué.
+      </p>
+      <ul>
+        <li>
+          <strong>Datos Recopilados:</strong> Recopilamos y almacenamos la
+          siguiente información de forma anónima:
+          <ul>
+            <li>
+              Un <strong>ID de jugador</strong> (`playerId`) generado
+              aleatoriamente y almacenado localmente en su navegador para llevar
+              un registro de su récord personal.
+            </li>
+            <li>
+              Su <strong>puntaje</strong> (`score`) final de cada partida.
+            </li>
+            <li>
+              La <strong>fecha y hora</strong> en que se registró el puntaje.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <strong>Finalidad de la Recopilación:</strong> Estos datos se utilizan
+          exclusivamente para funcionalidades del juego, como mostrar tablas de
+          puntuaciones, récords y realizar análisis estadísticos anónimos sobre
+          el rendimiento general de los jugadores.
+        </li>
+        <li>
+          <strong>Consentimiento:</strong> Al jugar, usted acepta la
+          recopilación de estos datos anónimos para los fines descritos.
+        </li>
+      </ul>
+
+      <h2>4. Exclusión de Garantías y Responsabilidad</h2>
+      <p>
+        El Sitio Web y todo su contenido se proporcionan "tal como están". No
+        ofrecemos ninguna garantía, expresa o implícita, sobre la exactitud,
+        integridad o utilidad de la información presentada. El uso de este Sitio
+        Web es bajo su propio riesgo y no seremos responsables de ningún daño
+        directo o indirecto que pueda derivarse de su uso.
+      </p>
+
+      <h2>5. Edad Mínima</h2>
+      <p>
+        El Sitio Web no está dirigido a menores de 13 años. No recopilamos
+        intencionadamente información de personas por debajo de esta edad.
+      </p>
+
+      <h2>6. Modificaciones del Aviso Legal</h2>
+      <p>
+        Nos reservamos el derecho de modificar este aviso legal en cualquier
+        momento. Cualquier cambio será efectivo inmediatamente después de su
+        publicación en esta página. Le recomendamos que la revise
+        periódicamente.
+      </p>
+
+      <h2>7. Contacto</h2>
+      <p>
+        Si tiene alguna pregunta o inquietud sobre este aviso legal, por favor,
+        contáctenos en la siguiente dirección de correo electrónico:
+        <strong>hola@duelodeprecios.com</strong>.
+      </p>
+
+      <br />
+      <a class="return-to-game" href="/">Volver al Juego</a>
+    </main>
+
+    <footer class="footer section-width">
+      <p>
+        © 2025, Duelo de Precios. <a href="/legal">Legal</a>
+        <a href="/contacto">Contacto</a>
+      </p>
+    </footer>
+  </body>
+</html>

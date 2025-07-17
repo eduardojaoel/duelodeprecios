@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Duelo de Precios - ¿Cuesta Más o Menos?</title>
+    <meta
+      name="description"
+      content="¡Juega Duelo de Precios al estilo arcade! Adivina si el precio del siguiente producto es más alto o más bajo y consigue el mayor puntaje. ¡Gratis y divertido!"
+    />
+    <meta
+      name="keywords"
+      content="higher or lower, mas alto o mas bajo, juego, arcade, precios, adivinar, gratis, pasatiempo, puntaje, duelo de precios"
+    />
+    <!--
+      <link rel="icon" href="favicon.ico" sizes="any" />
+      <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+      <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+      <meta
+        property="og:title"
+        content="Higher or Lower Arcade - ¡Desafío de Precios!"
+      />
+      <meta
+        property="og:description"
+        content="¿Podrás adivinar si el producto es más caro o más barato? ¡Pon a prueba tu instinto y consigue el High Score!"
+      />
+      <meta
+        property="og:image"
+        content="https://tu-usuario.github.io/tu-juego/images/social-preview.png"
+      />
+      <meta property="og:url" content="https://tu-usuario.github.io/tu-juego/" />
+      <meta property="og:type" content="website" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta
+        name="twitter:title"
+        content="Higher or Lower Arcade - ¡Desafío de Precios!"
+      />
+      <meta
+        name="twitter:description"
+        content="¿Podrás adivinar si el producto es más caro o más barato? ¡Pon a prueba tu instinto y consigue el High Score!"
+      />
+      <meta
+        name="twitter:image"
+        content="https://tu-usuario.github.io/tu-juego/images/social-preview.png"
+      />
+    -->
+    <link rel="stylesheet" href="fonts/fonts.css" />
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <h1 class="visually-hidden">Duelo de Precios</h1>
+    <header class="header section-width standard-logo-header">
+      <svg
+        class="standard-logo"
+        id="logo"
+        width="217"
+        height="71"
+        aria-label="Logo de Duelo de Precios"
+      >
+        <use href="assets/logo.svg#logo"></use>
+      </svg>
+    </header>
+
+    <main class="main-content">
+      <a class="return-to-game" href="/">Volver al Juego</a>
+      <h1>Contacto</h1>
+      <!-- modify this form HTML and place wherever you want your form -->
+      <form
+        id="contact-form"
+        class="contact-form"
+        action="https://formspree.io/f/movlvjbw"
+        method="POST"
+      >
+        <div class="input-row">
+          <label for="email">Correo Electrónico</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            autocomplete="email"
+            placeholder="tucorreo@gmail.com"
+          />
+        </div>
+        <div class="input-row">
+          <label for="message">Mensaje</label>
+          <textarea
+            id="message"
+            type=""
+            name="message"
+            rows="5"
+            placeholder="Tu Mensaje"
+          ></textarea>
+        </div>
+        <button id="contact-form-button" class="nes-btn">Enviar</button>
+        <p id="contact-form-status"></p>
+      </form>
+
+      <!-- Place this script at the end of the body tag -->
+      <script>
+        var form = document.getElementById("contact-form");
+
+        async function handleSubmit(event) {
+          event.preventDefault();
+          var status = document.getElementById("contact-form-status");
+          var data = new FormData(event.target);
+          fetch(event.target.action, {
+            method: form.method,
+            body: data,
+            headers: {
+              Accept: "application/json",
+            },
+          })
+            .then((response) => {
+              if (response.ok) {
+                status.innerHTML =
+                  "Gracias por tu mensaje, pronto te contactaremos.";
+                form.reset();
+              } else {
+                response.json().then((data) => {
+                  if (Object.hasOwn(data, "errors")) {
+                    status.innerHTML = data["errors"]
+                      .map((error) => error["message"])
+                      .join(", ");
+                  } else {
+                    status.innerHTML =
+                      "Ups! Hubo un problema enviando tu mensaje. Inténtelo más tarde.";
+                  }
+                });
+              }
+            })
+            .catch((error) => {
+              status.innerHTML =
+                "Ups! Hubo un problema enviando tu mensaje. Inténtelo más tarde.";
+            });
+        }
+        form.addEventListener("submit", handleSubmit);
+      </script>
+      <!-- <a class="return-to-game" href="/">Volver al Juego</a> -->
+    </main>
+
+    <footer class="footer section-width">
+      <p>
+        © 2025, Duelo de Precios. <a href="/legal">Legal</a>
+        <a href="/contacto">Contacto</a>
+      </p>
+    </footer>
+  </body>
+</html>

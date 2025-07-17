@@ -327,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
           // La librería devuelve la URL de la imagen directamente, ¡más fácil!
           const link = document.createElement("a");
           link.href = dataUrl;
-          link.download = "factura-duelo-de-precios.png";
+          link.download = "duelo-de-precios_score.png";
           link.click();
 
           // Volvemos a mostrar los botones
