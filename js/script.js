@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
       incorrect: "audios/sfx-incorrect.mp3",
       beep: "audios/sfx-scanner-beep.mp3",
     },
-    "https://eduardojaoel.github.io/duelodeprecios/"
+    "https://www.duelodeprecios.com/"
   );
 
   // --- 5. Funciones de Actualización de UI ---
