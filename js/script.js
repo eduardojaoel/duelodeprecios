@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let productReference = null;
   let productToGuess = null;
   let productReserve = null; // Producto precargado para la siguiente ronda
+  let shownProducts = [];
   let currentScore = 0;
   let highScore = 0;
   let canGuess = true;
@@ -314,6 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await getInitialProducts();
       productReference = data.reference;
       productToGuess = data.guess;
+      shownProducts = [productReference, productToGuess];
       setupFirstRoundWithProducts();
       await preloadNextProduct();
 
@@ -479,6 +481,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (productReserve) {
             productToGuess = productReserve;
             productReserve = null;
+            shownProducts.push(productToGuess);
             const newGuessElement = addProductToArena(
               productToGuess,
               "guess",
@@ -528,31 +531,63 @@ document.addEventListener("DOMContentLoaded", () => {
     }px))`;
   }
 
+  // Reemplaza la función logScoreToDB en tu script.js con esta versión
+
   async function logScoreToDB() {
     const gameData = {
       score: currentScore,
-      timestamp: new Date().toISOString(),
       playerId: obtenerPlayerId(),
       game_version: GAME_VERSION,
+      timestamp: new Date().toISOString(),
     };
+
+    console.log("Enviando datos de partida vía RPC:", gameData);
+
     try {
-      const { data, error } = await supabase.functions.invoke("log-score", {
-        body: gameData,
+      // Llamada RPC para registrar el puntaje de forma segura y directa
+      const { data: newId, error } = await supabase.rpc("log_game_session", {
+        p_score: gameData.score,
+        p_player_id: gameData.playerId,
+        p_game_version: gameData.game_version,
+        p_timestamp: gameData.timestamp,
       });
-      if (error) throw error;
-      console.log("Game session logged:", data);
+
+      if (error) {
+        throw error;
+      }
+
+      console.log("Partida registrada exitosamente con ID:", newId);
+
       const invoiceNumEl = document.getElementById("invoice-number-value");
-      if (invoiceNumEl && data.id) {
-        invoiceNumEl.textContent = "DDP" + String(data.id).padStart(8, "0");
+
+      // La llamada RPC devuelve el ID directamente
+      if (invoiceNumEl && newId) {
+        invoiceNumEl.textContent = "DDP" + String(newId).padStart(8, "0");
       }
     } catch (error) {
-      console.error("Error logging score:", error);
+      console.error("Error al registrar el puntaje vía RPC:", error);
     }
   }
 
   function triggerGameOver() {
     saveHighScoreToStorage();
     finalScoreDisplay.textContent = currentScore;
+
+    const totalSum = shownProducts.reduce(
+      (sum, product) => sum + (product.price || 0),
+      0
+    );
+
+    // El producto que se falló no se añade a 'shownProducts', así que lo sumamos al final.
+    const finalTotal = totalSum + (productToGuess.price || 0);
+
+    const totalValueElement = document.getElementById(
+      "invoice-line-total-value"
+    );
+    if (totalValueElement) {
+      totalValueElement.textContent = `$${finalTotal.toFixed(2)}`;
+    }
+
     document.getElementById("invoice-line-guesses-value").textContent =
       currentScore;
     if (gameOverHighScoreDisplay)
@@ -577,6 +612,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await getInitialProducts();
       productReference = data.reference;
       productToGuess = data.guess;
+      shownProducts = [productReference, productToGuess];
       setupFirstRoundWithProducts();
       await preloadNextProduct();
       setGameArenaHeight();
