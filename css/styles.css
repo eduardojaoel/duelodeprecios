@@ -861,3 +861,6 @@ a {
     gap: 6px;
   }
 }
+.play-button {
+  width: 100%;
+}

@@ -48,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const introMessages = [
     "Nadie se ha hecho millonario jugando a esto (que sepamos). Pero la gloria en Duelo de Precios... esa es otra historia. ¿La escribes?",
     "Si tuvieras un superpoder, ¿sería adivinar precios? Pues aquí puedes probar esa teoría. (No requiere capa).",
-    "No te vamos a pedir la tarjeta de crédito, solo tu mejor instinto para los precios. ¿Trato hecho?",
     "Advertencia: Jugar esto podría hacerte cuestionar todas tus decisiones de compra pasadas. O simplemente divertirte un rato. ¡Vale la pena!",
     "Tranqui, aquí no hay 'análisis de mercado' ni 'KPIs'. Solo precios, tu instinto y un botón de ¡PLAY! ¿Así o más fácil?",
   ];
@@ -254,23 +253,17 @@ document.addEventListener("DOMContentLoaded", () => {
     container.appendChild(card);
     gameArena.appendChild(container);
 
-    // Verificamos si la tarjeta que estamos creando es para el producto a adivinar
     if (role === "guess") {
-      // Actualizamos el nombre del producto (esto ya lo tenías)
       document.getElementById("controls-product-label").textContent =
         product.title;
 
-      // --- INICIO DE LA NUEVA LÓGICA ---
-      // 1. Obtenemos la referencia al span que contiene "Cuesta"
       const verbElement = document.getElementById("controls-product-text");
 
-      // 2. Verificamos la propiedad 'is_plural' del producto
       if (product.is_plural) {
-        verbElement.textContent = "Cuestan"; // Si es plural
+        verbElement.textContent = "Cuestan";
       } else {
-        verbElement.textContent = "Cuesta"; // Si es singular
+        verbElement.textContent = "Cuesta";
       }
-      // --- FIN DE LA NUEVA LÓGICA ---
     }
 
     return container;
@@ -376,12 +369,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
                 downloadButton.style.display = "block";
               });
-          }, 500); // 200 milisegundos de retraso suele ser suficiente.
-          // FIN DE LA SOLUCIÓN PARA SAFARI
-          // =================================================================
+          }, 500);
         })
         .catch((error) => {
-          // Este catch es para el Promise.all, por si los recursos no cargan
           console.error(
             "No se pudieron cargar los recursos necesarios para la captura.",
             error
@@ -722,6 +712,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function restartGame() {
+    if (typeof gtag === "function") {
+      gtag("event", "game_restart");
+    }
     currentScore = 0;
     outOfViewElements = [];
     productReserve = null;
