@@ -313,6 +313,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     downloadButton.addEventListener("click", () => {
+      if (typeof gtag === "function") {
+        gtag("event", "download_score", {
+          score: currentScore,
+        });
+      }
       downloadButton.style.display = "none";
 
       const fontsReadyPromise = document.fonts.ready;
@@ -391,6 +396,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!shareButton) return;
 
     shareButton.addEventListener("click", () => {
+      if (typeof gtag === "function") {
+        gtag("event", "share_score", {
+          score: currentScore,
+        });
+      }
+
       const shareData = {
         title: "Duelo de Precios",
         text: `¡Hice ${currentScore} puntos en Duelo de Precios! ¿Puedes superarme?`,
@@ -456,6 +467,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCurrentScoreDisplay();
     document.body.classList.remove("disable-scroll");
     canGuess = true;
+    if (typeof gtag === "function") {
+      gtag("event", "game_start");
+    }
     showScreen(gameScreen);
   }
 
@@ -677,6 +691,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function triggerGameOver() {
+    if (typeof gtag === "function") {
+      gtag("event", "game_over", {
+        score: currentScore,
+      });
+    }
+
     saveHighScoreToStorage();
     finalScoreDisplay.textContent = currentScore;
 
