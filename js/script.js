@@ -309,53 +309,59 @@ document.addEventListener("DOMContentLoaded", () => {
 
       Promise.all([fontsReadyPromise, ...imagesLoadedPromises])
         .then(() => {
-          console.log("¡Recursos listos! Iniciando captura con textura.");
+          setTimeout(() => {
+            console.log("Retraso finalizado. Iniciando captura.");
 
-          const scaleFactor = 2;
-          const options = {
-            width: invoiceElement.offsetWidth * scaleFactor,
-            height: invoiceElement.offsetHeight * scaleFactor,
-            style: {
-              transform: "scale(" + scaleFactor + ")",
-              transformOrigin: "top left",
-            },
-            // =================================================================
-            // AJUSTE 1: Añadir 'cacheBust' para forzar la carga de recursos externos
-            cacheBust: true,
-            // =================================================================
-          };
+            const scaleFactor = 2;
+            const options = {
+              width: invoiceElement.offsetWidth * scaleFactor,
+              height: invoiceElement.offsetHeight * scaleFactor,
+              style: {
+                transform: "scale(" + scaleFactor + ")",
+                transformOrigin: "top left",
+              },
+              cacheBust: true,
+            };
 
-          return domtoimage.toSvg(invoiceElement, options);
-        })
-        .then((svgDataUrl) => {
-          const img = new Image();
-          img.onload = function () {
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext("2d");
+            domtoimage
+              .toSvg(invoiceElement, options)
+              .then((svgDataUrl) => {
+                const img = new Image();
+                img.onload = function () {
+                  const canvas = document.createElement("canvas");
+                  canvas.width = img.width;
+                  canvas.height = img.height;
+                  const ctx = canvas.getContext("2d");
 
-            // =================================================================
-            // AJUSTE 2: ELIMINA ESTAS DOS LÍNEAS DE RELLENO MANUAL.
-            // La imagen capturada ya incluirá su propio fondo con textura.
-            // ctx.fillStyle = '#012533';
-            // ctx.fillRect(0, 0, canvas.width, canvas.height);
-            // =================================================================
+                  ctx.drawImage(img, 0, 0);
 
-            ctx.drawImage(img, 0, 0);
+                  const pngDataUrl = canvas.toDataURL("image/png");
+                  const link = document.createElement("a");
+                  link.href = pngDataUrl;
+                  link.download = "factura-duelo-de-precios.png";
+                  link.click();
 
-            const pngDataUrl = canvas.toDataURL("image/png");
-            const link = document.createElement("a");
-            link.href = pngDataUrl;
-            link.download = "factura-duelo-de-precios.png";
-            link.click();
-
-            downloadButton.style.display = "block";
-          };
-          img.src = svgDataUrl;
+                  downloadButton.style.display = "block";
+                };
+                img.src = svgDataUrl;
+              })
+              .catch((error) => {
+                console.error(
+                  "Oops, algo salió mal durante la captura!",
+                  error
+                );
+                downloadButton.style.display = "block";
+              });
+          }, 500); // 200 milisegundos de retraso suele ser suficiente.
+          // FIN DE LA SOLUCIÓN PARA SAFARI
+          // =================================================================
         })
         .catch((error) => {
-          console.error("Oops, algo salió mal durante la captura!", error);
+          // Este catch es para el Promise.all, por si los recursos no cargan
+          console.error(
+            "No se pudieron cargar los recursos necesarios para la captura.",
+            error
+          );
           downloadButton.style.display = "block";
         });
     });
