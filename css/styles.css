@@ -756,9 +756,9 @@ body {
 .share-button {
   grid-column: span 1;
 } */
-.invoice-buttons-wrapper .nes-secondary {
+/* .invoice-buttons-wrapper .nes-secondary {
   font-size: 12px;
-}
+} */
 .invoice-wrapper .download-button {
   position: absolute;
   top: 20px;
@@ -855,4 +855,9 @@ a {
 }
 .disable-scroll {
   overflow: hidden;
+}
+@media screen and (max-width: 749px) {
+  .product-content {
+    gap: 6px;
+  }
 }

@@ -114,23 +114,26 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const excludeId = excludeProduct ? excludeProduct.id : null;
 
+      const referencePrice = productReference ? productReference.price : 0;
+
       const { data, error } = await supabase.rpc("get_secure_random_product", {
-        exclude_product_id: excludeId,
+        p_exclude_id: excludeId,
+        p_reference_price: referencePrice,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (!data || data.length === 0) {
-        throw new Error(
-          "La función RPC 'get_secure_random_product' no devolvió productos."
+        const fallbackResult = await supabase.rpc(
+          "get_secure_random_product_fallback",
+          { p_exclude_id: excludeId }
         );
+        if (fallbackResult.error) throw fallbackResult.error;
+        return fallbackResult.data[0];
       }
 
       return data[0];
     } catch (error) {
-      console.error("Error al llamar a get_secure_random_product:", error);
       throw error;
     }
   }
@@ -214,11 +217,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.createElement("div");
     container.className = "product-display-container";
     container.dataset.productRole = role;
+
     const card = document.createElement("div");
     card.className = "product-card";
+
     const priceHTML = showPrice
       ? `$${product.price.toFixed(2)}`
       : `<span class="char">?</span><span class="char">?</span><span class="char">?</span>`;
+
     card.innerHTML = `
       <img src="images/${product.image}" alt="${
       product.title
@@ -240,16 +246,33 @@ document.addEventListener("DOMContentLoaded", () => {
             ? `<span class="product-measure">${product.measure}</span>`
             : ""
         }
-        <p class="product-price ${
-          showPrice ? "revealed" : ""
-        }"><span class="price-value">${priceHTML}</span></p>
+        <p class="product-price ${showPrice ? "revealed" : ""}">
+          <span class="price-value">${priceHTML}</span>
+        </p>
       </div>`;
+
     container.appendChild(card);
     gameArena.appendChild(container);
+
+    // Verificamos si la tarjeta que estamos creando es para el producto a adivinar
     if (role === "guess") {
+      // Actualizamos el nombre del producto (esto ya lo tenías)
       document.getElementById("controls-product-label").textContent =
         product.title;
+
+      // --- INICIO DE LA NUEVA LÓGICA ---
+      // 1. Obtenemos la referencia al span que contiene "Cuesta"
+      const verbElement = document.getElementById("controls-product-text");
+
+      // 2. Verificamos la propiedad 'is_plural' del producto
+      if (product.is_plural) {
+        verbElement.textContent = "Cuestan"; // Si es plural
+      } else {
+        verbElement.textContent = "Cuesta"; // Si es singular
+      }
+      // --- FIN DE LA NUEVA LÓGICA ---
     }
+
     return container;
   }
 
@@ -305,13 +328,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
 
-      console.log("Esperando a que las fuentes e imágenes estén listas...");
-
       Promise.all([fontsReadyPromise, ...imagesLoadedPromises])
         .then(() => {
           setTimeout(() => {
-            console.log("Retraso finalizado. Iniciando captura.");
-
             const scaleFactor = 2;
             const options = {
               width: invoiceElement.offsetWidth * scaleFactor,
@@ -338,7 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   const pngDataUrl = canvas.toDataURL("image/png");
                   const link = document.createElement("a");
                   link.href = pngDataUrl;
-                  link.download = "factura-duelo-de-precios.png";
+                  link.download = "puntaje-duelo-de-precios.png";
                   link.click();
 
                   downloadButton.style.display = "block";
