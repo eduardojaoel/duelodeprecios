@@ -283,6 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setupDownloadButton() {
     const downloadButton = document.getElementById("download-button");
+    // Usamos tu selector original para el contenedor de la factura
     const invoiceElement = document.querySelector(".invoice-wrapper");
 
     if (!downloadButton || !invoiceElement) {
@@ -293,24 +294,64 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     downloadButton.addEventListener("click", () => {
+      // Ocultamos ambos botones para que no aparezcan en la captura
       downloadButton.style.display = "none";
 
+      // Mantenemos la escala para una imagen de alta calidad
+      const scaleFactor = 2;
+      const options = {
+        width: invoiceElement.offsetWidth * scaleFactor,
+        height: invoiceElement.offsetHeight * scaleFactor,
+        style: {
+          transform: "scale(" + scaleFactor + ")",
+          transformOrigin: "top left",
+        },
+      };
+
+      // --- INICIO DEL NUEVO MÉTODO (Solución 2) ---
+
+      // 1. Primero, convertimos el elemento a un SVG, que es más fiable en móviles
       domtoimage
-        .toPng(invoiceElement, {
-          bgcolor: "#022C40",
-          quality: 1,
-        })
-        .then(function (dataUrl) {
-          const link = document.createElement("a");
-          link.href = dataUrl;
-          link.download = "duelo-de-precios_score.png";
-          link.click();
-          downloadButton.style.display = "block";
+        .toSvg(invoiceElement, options)
+        .then(function (svgDataUrl) {
+          const img = new Image();
+
+          // 2. Una vez que el SVG se carga en un objeto de imagen...
+          img.onload = function () {
+            // Creamos un canvas temporal
+            const canvas = document.createElement("canvas");
+            canvas.width = invoiceElement.offsetWidth * scaleFactor;
+            canvas.height = invoiceElement.offsetHeight * scaleFactor;
+            const ctx = canvas.getContext("2d");
+
+            // Dibujamos el color de fondo manualmente
+            ctx.fillStyle = "#022C40";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Dibujamos la imagen (que proviene del SVG) sobre el fondo
+            ctx.drawImage(img, 0, 0);
+
+            // 3. Convertimos el canvas final a una imagen PNG para la descarga
+            const pngDataUrl = canvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.href = pngDataUrl;
+            link.download = "duelo-de-precios_score.png";
+            link.click();
+
+            // Volvemos a mostrar los botones
+            downloadButton.style.display = "block";
+          };
+
+          // Esto activa el 'onload' de arriba
+          img.src = svgDataUrl;
         })
         .catch(function (error) {
           console.error("Oops, algo salió mal con dom-to-image!", error);
+          // Nos aseguramos de mostrar los botones de nuevo si hay un error
           downloadButton.style.display = "block";
         });
+
+      // --- FIN DEL NUEVO MÉTODO ---
     });
   }
 
