@@ -283,75 +283,81 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setupDownloadButton() {
     const downloadButton = document.getElementById("download-button");
-    // Usamos tu selector original para el contenedor de la factura
     const invoiceElement = document.querySelector(".invoice-wrapper");
 
     if (!downloadButton || !invoiceElement) {
-      console.error(
-        "No se encontraron el botón de descarga o el elemento de la factura."
-      );
       return;
     }
 
     downloadButton.addEventListener("click", () => {
-      // Ocultamos ambos botones para que no aparezcan en la captura
       downloadButton.style.display = "none";
 
-      // Mantenemos la escala para una imagen de alta calidad
-      const scaleFactor = 2;
-      const options = {
-        width: invoiceElement.offsetWidth * scaleFactor,
-        height: invoiceElement.offsetHeight * scaleFactor,
-        style: {
-          transform: "scale(" + scaleFactor + ")",
-          transformOrigin: "top left",
-        },
-      };
+      const fontsReadyPromise = document.fonts.ready;
+      const images = invoiceElement.querySelectorAll("img");
+      const imagesLoadedPromises = [...images].map((img) => {
+        return new Promise((resolve) => {
+          if (img.complete) {
+            resolve();
+          } else {
+            img.addEventListener("load", resolve, { once: true });
+            img.addEventListener("error", resolve, { once: true });
+          }
+        });
+      });
 
-      // --- INICIO DEL NUEVO MÉTODO (Solución 2) ---
+      console.log("Esperando a que las fuentes e imágenes estén listas...");
 
-      // 1. Primero, convertimos el elemento a un SVG, que es más fiable en móviles
-      domtoimage
-        .toSvg(invoiceElement, options)
-        .then(function (svgDataUrl) {
+      Promise.all([fontsReadyPromise, ...imagesLoadedPromises])
+        .then(() => {
+          console.log("¡Recursos listos! Iniciando captura con textura.");
+
+          const scaleFactor = 2;
+          const options = {
+            width: invoiceElement.offsetWidth * scaleFactor,
+            height: invoiceElement.offsetHeight * scaleFactor,
+            style: {
+              transform: "scale(" + scaleFactor + ")",
+              transformOrigin: "top left",
+            },
+            // =================================================================
+            // AJUSTE 1: Añadir 'cacheBust' para forzar la carga de recursos externos
+            cacheBust: true,
+            // =================================================================
+          };
+
+          return domtoimage.toSvg(invoiceElement, options);
+        })
+        .then((svgDataUrl) => {
           const img = new Image();
-
-          // 2. Una vez que el SVG se carga en un objeto de imagen...
           img.onload = function () {
-            // Creamos un canvas temporal
             const canvas = document.createElement("canvas");
-            canvas.width = invoiceElement.offsetWidth * scaleFactor;
-            canvas.height = invoiceElement.offsetHeight * scaleFactor;
+            canvas.width = img.width;
+            canvas.height = img.height;
             const ctx = canvas.getContext("2d");
 
-            // Dibujamos el color de fondo manualmente
-            ctx.fillStyle = "#022C40";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // =================================================================
+            // AJUSTE 2: ELIMINA ESTAS DOS LÍNEAS DE RELLENO MANUAL.
+            // La imagen capturada ya incluirá su propio fondo con textura.
+            // ctx.fillStyle = '#012533';
+            // ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // =================================================================
 
-            // Dibujamos la imagen (que proviene del SVG) sobre el fondo
             ctx.drawImage(img, 0, 0);
 
-            // 3. Convertimos el canvas final a una imagen PNG para la descarga
             const pngDataUrl = canvas.toDataURL("image/png");
             const link = document.createElement("a");
             link.href = pngDataUrl;
-            link.download = "duelo-de-precios_score.png";
+            link.download = "factura-duelo-de-precios.png";
             link.click();
 
-            // Volvemos a mostrar los botones
             downloadButton.style.display = "block";
           };
-
-          // Esto activa el 'onload' de arriba
           img.src = svgDataUrl;
         })
-        .catch(function (error) {
-          console.error("Oops, algo salió mal con dom-to-image!", error);
-          // Nos aseguramos de mostrar los botones de nuevo si hay un error
+        .catch((error) => {
+          console.error("Oops, algo salió mal durante la captura!", error);
           downloadButton.style.display = "block";
         });
-
-      // --- FIN DEL NUEVO MÉTODO ---
     });
   }
 
