@@ -337,6 +337,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const leaderboardBackTo = button.dataset.backTo;
 
+    if (leaderboardBackTo == "start-screen") {
+    } else if (leaderboardBackTo == "game-over-screen") {
+    }
+
+    console.log(leaderboardBackTo);
+
     leaderboardCloseButton.addEventListener("click", () => {
       if (leaderboardBackTo == "gamestart-screen") {
         showScreen(document.getElementById(leaderboardBackTo), true);
@@ -790,31 +796,32 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function logScoreToDB(playerName, score) {
-    if (!playerName) return false;
-    try {
-      const { data: player_uuid, error: playerError } = await supabase.rpc(
-        "get_or_create_player",
-        { p_player_name: playerName }
-      );
-      if (playerError) throw playerError;
+    let playerUUID = null; // Inicia como nulo para las partidas anónimas
 
+    try {
+      // Solo si se proporciona un nombre, obtenemos o creamos el jugador
+      if (playerName) {
+        const { data, error: playerError } = await supabase.rpc(
+          "get_or_create_player",
+          { p_player_name: playerName }
+        );
+        if (playerError) throw playerError;
+        playerUUID = data; // Asignamos el UUID del jugador
+      }
+
+      // Esta llamada ahora se ejecuta siempre, con un UUID (si hay nombre) o con null
       const { data: newId, error: sessionError } = await supabase.rpc(
         "log_game_session",
         {
           p_score: score,
-          p_player_uuid: player_uuid,
+          p_player_uuid: playerUUID,
           p_game_version: GAME_VERSION,
           p_timestamp: new Date().toISOString(),
         }
       );
       if (sessionError) throw sessionError;
 
-      console.log(
-        "Partida registrada para",
-        playerName,
-        "con ID de sesión:",
-        newId
-      );
+      console.log("Partida registrada con ID de sesión:", newId);
       const invoiceNumEl = document.getElementById("invoice-number-value");
       if (invoiceNumEl && newId) {
         invoiceNumEl.textContent = "DDP" + String(newId).padStart(8, "0");
@@ -827,6 +834,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function triggerGameOver() {
+    // 1. Prepara todos los datos para la pantalla de Game Over
     saveHighScoreToStorage();
     finalScoreDisplay.textContent = currentScore;
     document.getElementById("invoice-line-guesses-value").textContent =
@@ -836,40 +844,44 @@ document.addEventListener("DOMContentLoaded", () => {
       (sum, product) => sum + (product.price || 0),
       0
     );
-
     const finalTotal = totalSum + (productToGuess.price || 0);
-
     const totalValueElement = document.getElementById(
       "invoice-line-total-value"
     );
     if (totalValueElement) {
       totalValueElement.textContent = `$${finalTotal.toFixed(2)}`;
     }
-
-    if (gameOverHighScoreDisplay)
+    if (gameOverHighScoreDisplay) {
       gameOverHighScoreDisplay.textContent = highScore;
-
-    // Primero, verificamos si el puntaje es alto
-    const { data: isHighScore, error } = await supabase.rpc(
-      "check_if_high_score",
-      {
-        p_score: currentScore,
-      }
-    );
-
-    if (error) {
-      console.error("Error al verificar el puntaje:", error);
-      // Si falla la verificación, guardamos anónimamente y mostramos la pantalla
-      logScoreToDB(null, currentScore);
-      showScreen(gameOverScreen);
-      return;
     }
 
-    // Si es un puntaje alto y mayor que cero, pedimos el nombre
-    if (isHighScore && currentScore > 0) {
-      promptForPlayerName();
-    } else {
-      // Si no, guardamos la partida anónimamente y mostramos la pantalla de Game Over
+    // 2. Verificamos si es un puntaje alto
+    try {
+      const { data: isHighScore, error } = await supabase.rpc(
+        "check_if_high_score",
+        {
+          p_score: currentScore,
+        }
+      );
+
+      if (error) {
+        throw error; // Si la verificación falla, vamos al catch
+      }
+
+      // 3. Decidimos si pedimos el nombre o no
+      if (isHighScore && currentScore > 0) {
+        // Si es un puntaje alto, llamamos a la pantalla para pedir el nombre.
+        // Esta función ya se encarga de llamar a logScoreToDB con el nombre.
+        promptForPlayerName();
+      } else {
+        // Si NO es un puntaje alto (o el puntaje es 0), guardamos la partida anónimamente.
+        logScoreToDB(null, currentScore);
+        // Y mostramos la pantalla de Game Over directamente.
+        showScreen(gameOverScreen);
+      }
+    } catch (error) {
+      console.error("Error en el flujo de fin de partida:", error);
+      // Como fallback, si algo falla, guardamos anónimamente y mostramos la pantalla
       logScoreToDB(null, currentScore);
       showScreen(gameOverScreen);
     }
