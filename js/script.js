@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const startScreen = document.getElementById("start-screen");
   const gameScreen = document.getElementById("game-screen");
   const gameOverScreen = document.getElementById("game-over-screen");
+  const leaderboardScreen = document.getElementById("leaderboard-screen");
+  const enterNameScreen = document.getElementById("enter-name-screen");
 
   const logo = document.getElementById("logo");
   const introTextElement = document.getElementById("intro-text");
@@ -150,12 +152,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function showScreen(screenToShow) {
-    startScreen.classList.remove("active");
+  function showScreen(screenToShow, keepHomePage) {
     gameScreen.classList.remove("active");
     gameOverScreen.classList.remove("active");
+    leaderboardScreen.classList.remove("active");
+    enterNameScreen.classList.remove("active");
+    if (!keepHomePage) {
+      startScreen.classList.remove("active");
+    }
+
     screenToShow.classList.add("active");
-    if (logo) {
+    if (logo && !keepHomePage) {
       logo.classList.toggle("active", screenToShow === startScreen);
     }
   }
@@ -295,6 +302,80 @@ document.addEventListener("DOMContentLoaded", () => {
     refEl.classList.add("in-view");
     guessEl.classList.add("in-view");
     return true;
+  }
+
+  function setupLeaderboardButton() {
+    const leaderboardButtons = document.querySelectorAll(".leaderboard-button");
+    if (!leaderboardButtons) return;
+
+    leaderboardButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        showLeaderboard(button);
+      });
+    });
+  }
+
+  function getPlayerName() {
+    let name = localStorage.getItem("playerName");
+    if (!name) {
+      name = prompt("¡Nuevo Récord! Ingresa tus iniciales (3 letras):", "AAA");
+      if (name && name.length === 3) {
+        localStorage.setItem("playerName", name.toUpperCase());
+      } else {
+        return null; // El usuario canceló o ingresó un nombre inválido
+      }
+    }
+    return name.toUpperCase();
+  }
+
+  async function showLeaderboard(button) {
+    const leaderboardScreen = document.getElementById("leaderboard-screen");
+    const leaderboardBody = document.getElementById("leaderboard-body");
+    const leaderboardCloseButton = document.getElementById(
+      "leaderboard-close-button"
+    );
+
+    const leaderboardBackTo = button.dataset.backTo;
+
+    leaderboardCloseButton.addEventListener("click", () => {
+      if (leaderboardBackTo == "gamestart-screen") {
+        showScreen(document.getElementById(leaderboardBackTo), true);
+      } else {
+        showScreen(document.getElementById(leaderboardBackTo));
+      }
+    });
+
+    showScreen(leaderboardScreen, document.getElementById(leaderboardBackTo));
+    leaderboardBody.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
+
+    try {
+      const { data: scores, error } = await supabase.rpc(
+        "get_all_time_leaderboard"
+      );
+
+      if (error) throw error;
+
+      if (!scores || scores.length === 0) {
+        leaderboardBody.innerHTML =
+          '<tr><td colspan="3">Aún no hay puntajes este mes. ¡Sé el primero!</td></tr>';
+        return;
+      }
+
+      leaderboardBody.innerHTML = scores
+        .map(
+          (entry) =>
+            `<tr class="ranking-position-${entry.rank}">
+         <td>${entry.rank}.</td>
+         <td>${entry.player_name}</td>
+         <td>${entry.score}</td>
+       </tr>`
+        )
+        .join("");
+    } catch (error) {
+      console.error("Error al cargar el leaderboard:", error);
+      leaderboardBody.innerHTML =
+        '<tr><td colspan="3">No se pudo cargar el ranking.</td></tr>';
+    }
   }
 
   function setupDownloadButton() {
@@ -614,16 +695,16 @@ document.addEventListener("DOMContentLoaded", () => {
             triggerGameOver();
           }
         } else {
-          logScoreToDB();
+          // --- AQUÍ ESTÁ EL CAMBIO ---
+          // logScoreToDB(null, currentScore); // <<-- ELIMINAMOS ESTA LÍNEA REDUNDANTE
           setDateAndTime();
-          triggerGameOver();
+          triggerGameOver(); // Dejamos que triggerGameOver se encargue de todo
         }
       }, 2000);
     } catch (error) {
       console.error("Error al verificar la jugada:", error);
       productCard.classList.remove("is-charging");
       canGuess = true;
-      triggerGameOver();
     }
   }
 
@@ -650,65 +731,137 @@ document.addEventListener("DOMContentLoaded", () => {
     }px))`;
   }
 
-  async function logScoreToDB() {
-    const gameData = {
-      score: currentScore,
-      playerId: obtenerPlayerId(),
-      game_version: GAME_VERSION,
-      timestamp: new Date().toISOString(),
+  function promptForPlayerName() {
+    const nameScreen = document.getElementById("enter-name-screen");
+    const nameInput = document.getElementById("playerNameInput");
+    const saveButton = document.getElementById("saveScoreButton");
+    const errorMessage = document.getElementById("name-error-message");
+
+    // Reiniciamos el estado del formulario cada vez que se llama
+    errorMessage.textContent = "";
+    saveButton.disabled = false;
+    saveButton.textContent = "Guardar";
+    nameInput.classList.remove("input-error");
+
+    const savedName = localStorage.getItem("playerName");
+    if (savedName) {
+      nameInput.value = savedName;
+    }
+
+    showScreen(nameScreen);
+
+    setTimeout(() => {
+      nameInput.focus();
+    }, 500);
+
+    // Creamos un manejador de eventos que se elimina a sí mismo
+    const handleSaveClick = async () => {
+      const playerName = nameInput.value.trim();
+      const validationRegex = /^[a-zA-Z0-9 ]{1,8}$/;
+
+      if (validationRegex.test(playerName)) {
+        saveButton.disabled = true;
+        saveButton.textContent = "Guardando...";
+
+        localStorage.setItem("playerName", playerName);
+        const success = await logScoreToDB(playerName, currentScore);
+
+        if (success) {
+          showScreen(document.getElementById("game-over-screen"));
+        } else {
+          errorMessage.textContent = "Hubo un error al guardar.";
+          saveButton.disabled = false; // Vuelve a habilitar en caso de error
+          saveButton.textContent = "Guardar";
+        }
+      } else {
+        nameInput.classList.add("input-error");
+        errorMessage.textContent = "Debe tener entre 1 y 8 caracteres.";
+      }
     };
 
-    try {
-      const { data: newId, error } = await supabase.rpc("log_game_session", {
-        p_score: gameData.score,
-        p_player_id: gameData.playerId,
-        p_game_version: gameData.game_version,
-        p_timestamp: gameData.timestamp,
-      });
+    // Eliminamos cualquier listener antiguo y añadimos el nuevo
+    saveButton.replaceWith(saveButton.cloneNode(true));
+    document
+      .getElementById("saveScoreButton")
+      .addEventListener("click", handleSaveClick);
+  }
 
-      if (error) {
-        throw error;
+  async function logScoreToDB(playerName, score) {
+    let playerUUID = null;
+    let newId = null; // Variable para el ID de sesión
+
+    try {
+      if (playerName) {
+        const { data: player_uuid_data, error: playerError } =
+          await supabase.rpc("get_or_create_player", {
+            p_player_name: playerName,
+          });
+        if (playerError) throw playerError;
+        playerUUID = player_uuid_data;
       }
 
-      const invoiceNumEl = document.getElementById("invoice-number-value");
+      const { data: sessionId, error: sessionError } = await supabase.rpc(
+        "log_game_session",
+        {
+          p_score: score,
+          p_player_uuid: playerUUID,
+          p_game_version: GAME_VERSION,
+          p_timestamp: new Date().toISOString(),
+        }
+      );
 
+      if (sessionError) {
+        // Si hay un error en la llamada RPC, lo lanzamos para que lo capture el catch
+        throw sessionError;
+      }
+
+      newId = sessionId; // Guardamos el ID si la llamada fue exitosa
+      console.log("Partida registrada con ID de sesión:", newId);
+
+      const invoiceNumEl = document.getElementById("invoice-number-value");
       if (invoiceNumEl && newId) {
         invoiceNumEl.textContent = "DDP" + String(newId).padStart(8, "0");
       }
+      return true;
     } catch (error) {
-      console.error("Error al registrar el puntaje vía RPC:", error);
+      console.error("Error al registrar el puntaje:", error);
+      // Al haber un error, no se ejecuta el log de "Partida registrada"
+      return false;
     }
   }
 
-  function triggerGameOver() {
-    if (typeof gtag === "function") {
-      gtag("event", "game_over", {
-        score: currentScore,
-      });
-    }
-
+  async function triggerGameOver() {
     saveHighScoreToStorage();
     finalScoreDisplay.textContent = currentScore;
-
-    const totalSum = shownProducts.reduce(
-      (sum, product) => sum + (product.price || 0),
-      0
-    );
-
-    const finalTotal = totalSum + (productToGuess.price || 0);
-
-    const totalValueElement = document.getElementById(
-      "invoice-line-total-value"
-    );
-    if (totalValueElement) {
-      totalValueElement.textContent = `$${finalTotal.toFixed(2)}`;
-    }
-
     document.getElementById("invoice-line-guesses-value").textContent =
       currentScore;
     if (gameOverHighScoreDisplay)
       gameOverHighScoreDisplay.textContent = highScore;
-    showScreen(gameOverScreen);
+
+    // Primero, verificamos si el puntaje es alto
+    const { data: isHighScore, error } = await supabase.rpc(
+      "check_if_high_score",
+      {
+        p_score: currentScore,
+      }
+    );
+
+    if (error) {
+      console.error("Error al verificar el puntaje:", error);
+      // Si falla la verificación, guardamos anónimamente y mostramos la pantalla
+      logScoreToDB(null, currentScore);
+      showScreen(gameOverScreen);
+      return;
+    }
+
+    // Si es un puntaje alto y mayor que cero, pedimos el nombre
+    if (isHighScore && currentScore > 0) {
+      promptForPlayerName();
+    } else {
+      // Si no, guardamos la partida anónimamente y mostramos la pantalla de Game Over
+      logScoreToDB(null, currentScore);
+      showScreen(gameOverScreen);
+    }
   }
 
   async function restartGame() {
@@ -757,4 +910,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeGameData();
   setupDownloadButton();
   setupShareButton();
+  setupLeaderboardButton();
 });
