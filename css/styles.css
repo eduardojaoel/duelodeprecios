@@ -1030,6 +1030,7 @@ a {
 }
 #leaderboard-body tr td:nth-child(1) {
   text-align: left;
+  color: var(--color-subbed);
 }
 #leaderboard-body tr td:nth-child(2) {
   font-family: var(--font-8-bold);
@@ -1050,6 +1051,43 @@ a {
   background: linear-gradient(
     90deg,
     rgba(2, 58, 80, 1) 0%,
+    rgba(2, 58, 80, 1) 60%,
     rgba(218, 165, 32, 1) 100%
   );
+}
+#leaderboard-body tr.ranking-position-2 {
+  background: #023a50;
+  background: linear-gradient(
+    90deg,
+    rgba(2, 58, 80, 1) 0%,
+    rgba(2, 58, 80, 1) 65%,
+    #a9a9a9 100%
+  );
+}
+#leaderboard-body tr.ranking-position-3 {
+  background: #023a50;
+  background: linear-gradient(
+    90deg,
+    rgba(2, 58, 80, 1) 0%,
+    rgba(2, 58, 80, 1) 70%,
+    rgba(205, 127, 50, 1) 100%
+  );
+}
+#leaderboard-body .loading-row {
+  grid-template-columns: 1fr;
+}
+#leaderboard-body .loading-row td.loading-row-text {
+  text-align: center;
+}
+#leaderboard-body tr:last-child {
+  margin: 0;
+}
+.invoice-wrapper .leaderboard-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+.invoice-wrapper .leaderboard-button svg {
+  width: 19px;
+  height: 19px;
 }

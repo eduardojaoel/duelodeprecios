@@ -346,7 +346,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     showScreen(leaderboardScreen, document.getElementById(leaderboardBackTo));
-    leaderboardBody.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
+    leaderboardBody.innerHTML =
+      '<tr class="loading-row"><td class="loading-row-text">Cargando...</td></tr>';
 
     try {
       const { data: scores, error } = await supabase.rpc(
@@ -380,6 +381,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setupDownloadButton() {
     const downloadButton = document.getElementById("download-button");
+    const leaderboardButton = document.getElementById("leaderboard-button");
     const invoiceElement = document.querySelector(".invoice-wrapper");
 
     if (!downloadButton || !invoiceElement) {
@@ -393,6 +395,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
       downloadButton.style.display = "none";
+      leaderboardButton.style.display = "none";
 
       const fontsReadyPromise = document.fonts.ready;
       const images = invoiceElement.querySelectorAll("img");
@@ -440,6 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   link.click();
 
                   downloadButton.style.display = "block";
+                  leaderboardButton.style.display = "block";
                 };
                 img.src = svgDataUrl;
               })
@@ -449,6 +453,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   error
                 );
                 downloadButton.style.display = "block";
+                leaderboardButton.style.display = "block";
               });
           }, 500);
         })
@@ -458,6 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
             error
           );
           downloadButton.style.display = "block";
+          leaderboardButton.style.display = "block";
         });
     });
   }
@@ -835,6 +841,21 @@ document.addEventListener("DOMContentLoaded", () => {
     finalScoreDisplay.textContent = currentScore;
     document.getElementById("invoice-line-guesses-value").textContent =
       currentScore;
+
+    const totalSum = shownProducts.reduce(
+      (sum, product) => sum + (product.price || 0),
+      0
+    );
+
+    const finalTotal = totalSum + (productToGuess.price || 0);
+
+    const totalValueElement = document.getElementById(
+      "invoice-line-total-value"
+    );
+    if (totalValueElement) {
+      totalValueElement.textContent = `$${finalTotal.toFixed(2)}`;
+    }
+
     if (gameOverHighScoreDisplay)
       gameOverHighScoreDisplay.textContent = highScore;
 
