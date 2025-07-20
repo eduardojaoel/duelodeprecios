@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const HIGH_SCORE_KEY = "dueloDePreciosHighScore_v1";
   const PLAYER_ID_KEY = "dueloDePreciosPlayerId_v1";
-  const GAME_VERSION = "1.0";
+  const GAME_VERSION = "1.0.1";
 
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vYXRya3FpeXNycndpamJjaGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4OTI1ODgsImV4cCI6MjA2NDQ2ODU4OH0.SJB5Rc323ASOebF-aBdZVd9SZg5QXUXeyo4zj3FMWqg";
@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (name && name.length === 3) {
         localStorage.setItem("playerName", name.toUpperCase());
       } else {
-        return null; // El usuario canceló o ingresó un nombre inválido
+        return null;
       }
     }
     return name.toUpperCase();
@@ -338,10 +338,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const leaderboardBackTo = button.dataset.backTo;
 
     if (leaderboardBackTo == "start-screen") {
+      if (typeof gtag === "function") {
+        gtag("event", "leaderboard_from_homepage");
+      }
     } else if (leaderboardBackTo == "game-over-screen") {
+      if (typeof gtag === "function") {
+        gtag("event", "leaderboard_from_gameover");
+      }
     }
-
-    console.log(leaderboardBackTo);
 
     leaderboardCloseButton.addEventListener("click", () => {
       if (leaderboardBackTo == "gamestart-screen") {
@@ -355,7 +359,6 @@ document.addEventListener("DOMContentLoaded", () => {
     leaderboardBody.innerHTML =
       '<tr class="loading-row"><td class="loading-row-text">Cargando...</td></tr>';
     try {
-      // Llamamos a la nueva función que devuelve los nombres ya filtrados
       const { data: scores, error } = await supabase.rpc(
         "get_leaderboard_filtered"
       );
@@ -704,10 +707,8 @@ document.addEventListener("DOMContentLoaded", () => {
             triggerGameOver();
           }
         } else {
-          // --- AQUÍ ESTÁ EL CAMBIO ---
-          // logScoreToDB(null, currentScore); // <<-- ELIMINAMOS ESTA LÍNEA REDUNDANTE
           setDateAndTime();
-          triggerGameOver(); // Dejamos que triggerGameOver se encargue de todo
+          triggerGameOver();
         }
       }, 2000);
     } catch (error) {
@@ -746,7 +747,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const saveButton = document.getElementById("saveScoreButton");
     const errorMessage = document.getElementById("name-error-message");
 
-    // Reiniciamos el estado del formulario cada vez que se llama
     errorMessage.textContent = "";
     saveButton.disabled = false;
     saveButton.textContent = "Guardar";
@@ -763,7 +763,6 @@ document.addEventListener("DOMContentLoaded", () => {
       nameInput.focus();
     }, 500);
 
-    // Creamos un manejador de eventos que se elimina a sí mismo
     const handleSaveClick = async () => {
       const playerName = nameInput.value.trim();
       const validationRegex = /^[a-zA-Z0-9 ]{1,8}$/;
@@ -779,7 +778,7 @@ document.addEventListener("DOMContentLoaded", () => {
           showScreen(document.getElementById("game-over-screen"));
         } else {
           errorMessage.textContent = "Hubo un error al guardar.";
-          saveButton.disabled = false; // Vuelve a habilitar en caso de error
+          saveButton.disabled = false;
           saveButton.textContent = "Guardar";
         }
       } else {
@@ -788,7 +787,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
 
-    // Eliminamos cualquier listener antiguo y añadimos el nuevo
     saveButton.replaceWith(saveButton.cloneNode(true));
     document
       .getElementById("saveScoreButton")
@@ -796,20 +794,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function logScoreToDB(playerName, score) {
-    let playerUUID = null; // Inicia como nulo para las partidas anónimas
+    let playerUUID = null;
 
     try {
-      // Solo si se proporciona un nombre, obtenemos o creamos el jugador
       if (playerName) {
         const { data, error: playerError } = await supabase.rpc(
           "get_or_create_player",
           { p_player_name: playerName }
         );
         if (playerError) throw playerError;
-        playerUUID = data; // Asignamos el UUID del jugador
+        playerUUID = data;
       }
 
-      // Esta llamada ahora se ejecuta siempre, con un UUID (si hay nombre) o con null
       const { data: newId, error: sessionError } = await supabase.rpc(
         "log_game_session",
         {
@@ -821,7 +817,6 @@ document.addEventListener("DOMContentLoaded", () => {
       );
       if (sessionError) throw sessionError;
 
-      console.log("Partida registrada con ID de sesión:", newId);
       const invoiceNumEl = document.getElementById("invoice-number-value");
       if (invoiceNumEl && newId) {
         invoiceNumEl.textContent = "DDP" + String(newId).padStart(8, "0");
@@ -834,7 +829,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function triggerGameOver() {
-    // 1. Prepara todos los datos para la pantalla de Game Over
     saveHighScoreToStorage();
     finalScoreDisplay.textContent = currentScore;
     document.getElementById("invoice-line-guesses-value").textContent =
@@ -855,7 +849,6 @@ document.addEventListener("DOMContentLoaded", () => {
       gameOverHighScoreDisplay.textContent = highScore;
     }
 
-    // 2. Verificamos si es un puntaje alto
     try {
       const { data: isHighScore, error } = await supabase.rpc(
         "check_if_high_score",
@@ -865,23 +858,17 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       if (error) {
-        throw error; // Si la verificación falla, vamos al catch
+        throw error;
       }
 
-      // 3. Decidimos si pedimos el nombre o no
       if (isHighScore && currentScore > 0) {
-        // Si es un puntaje alto, llamamos a la pantalla para pedir el nombre.
-        // Esta función ya se encarga de llamar a logScoreToDB con el nombre.
         promptForPlayerName();
       } else {
-        // Si NO es un puntaje alto (o el puntaje es 0), guardamos la partida anónimamente.
         logScoreToDB(null, currentScore);
-        // Y mostramos la pantalla de Game Over directamente.
         showScreen(gameOverScreen);
       }
     } catch (error) {
       console.error("Error en el flujo de fin de partida:", error);
-      // Como fallback, si algo falla, guardamos anónimamente y mostramos la pantalla
       logScoreToDB(null, currentScore);
       showScreen(gameOverScreen);
     }
