@@ -348,20 +348,17 @@ document.addEventListener("DOMContentLoaded", () => {
     showScreen(leaderboardScreen, document.getElementById(leaderboardBackTo));
     leaderboardBody.innerHTML =
       '<tr class="loading-row"><td class="loading-row-text">Cargando...</td></tr>';
-
     try {
+      // Llamamos a la nueva función que devuelve los nombres ya filtrados
       const { data: scores, error } = await supabase.rpc(
-        "get_all_time_leaderboard"
+        "get_leaderboard_filtered"
       );
-
       if (error) throw error;
-
       if (!scores || scores.length === 0) {
         leaderboardBody.innerHTML =
-          '<tr><td colspan="3">Aún no hay puntajes este mes. ¡Sé el primero!</td></tr>';
+          '<tr class="no-data"><td colspan="3">Aún no hay puntajes. ¡Sé el primero!</td></tr>';
         return;
       }
-
       leaderboardBody.innerHTML = scores
         .map(
           (entry) =>
@@ -793,37 +790,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function logScoreToDB(playerName, score) {
-    let playerUUID = null;
-    let newId = null; // Variable para el ID de sesión
-
+    if (!playerName) return false;
     try {
-      if (playerName) {
-        const { data: player_uuid_data, error: playerError } =
-          await supabase.rpc("get_or_create_player", {
-            p_player_name: playerName,
-          });
-        if (playerError) throw playerError;
-        playerUUID = player_uuid_data;
-      }
+      const { data: player_uuid, error: playerError } = await supabase.rpc(
+        "get_or_create_player",
+        { p_player_name: playerName }
+      );
+      if (playerError) throw playerError;
 
-      const { data: sessionId, error: sessionError } = await supabase.rpc(
+      const { data: newId, error: sessionError } = await supabase.rpc(
         "log_game_session",
         {
           p_score: score,
-          p_player_uuid: playerUUID,
+          p_player_uuid: player_uuid,
           p_game_version: GAME_VERSION,
           p_timestamp: new Date().toISOString(),
         }
       );
+      if (sessionError) throw sessionError;
 
-      if (sessionError) {
-        // Si hay un error en la llamada RPC, lo lanzamos para que lo capture el catch
-        throw sessionError;
-      }
-
-      newId = sessionId; // Guardamos el ID si la llamada fue exitosa
-      console.log("Partida registrada con ID de sesión:", newId);
-
+      console.log(
+        "Partida registrada para",
+        playerName,
+        "con ID de sesión:",
+        newId
+      );
       const invoiceNumEl = document.getElementById("invoice-number-value");
       if (invoiceNumEl && newId) {
         invoiceNumEl.textContent = "DDP" + String(newId).padStart(8, "0");
@@ -831,7 +822,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return true;
     } catch (error) {
       console.error("Error al registrar el puntaje:", error);
-      // Al haber un error, no se ejecuta el log de "Partida registrada"
       return false;
     }
   }
