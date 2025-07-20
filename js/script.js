@@ -747,6 +747,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const saveButton = document.getElementById("saveScoreButton");
     const errorMessage = document.getElementById("name-error-message");
 
+    const skipButton = document.getElementById("skipNameButton");
+
     errorMessage.textContent = "";
     saveButton.disabled = false;
     saveButton.textContent = "Guardar";
@@ -762,6 +764,11 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       nameInput.focus();
     }, 500);
+
+    const handleSkipClick = () => {
+      logScoreToDB(null, currentScore);
+      showScreen(document.getElementById("game-over-screen"));
+    };
 
     const handleSaveClick = async () => {
       const playerName = nameInput.value.trim();
@@ -787,10 +794,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
 
-    saveButton.replaceWith(saveButton.cloneNode(true));
-    document
-      .getElementById("saveScoreButton")
-      .addEventListener("click", handleSaveClick);
+    const newSaveButton = saveButton.cloneNode(true);
+    saveButton.parentNode.replaceChild(newSaveButton, saveButton);
+    newSaveButton.addEventListener("click", handleSaveClick);
+
+    const newSkipButton = skipButton.cloneNode(true);
+    skipButton.parentNode.replaceChild(newSkipButton, skipButton);
+    newSkipButton.addEventListener("click", handleSkipClick);
   }
 
   async function logScoreToDB(playerName, score) {
