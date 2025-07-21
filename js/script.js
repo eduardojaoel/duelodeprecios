@@ -385,6 +385,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Cerca del inicio de tu script, añade esta función auxiliar
+  function getFontCss() {
+    let css = "";
+    // Recorre todas las hojas de estilo del documento
+    for (const sheet of document.styleSheets) {
+      try {
+        // Busca la hoja de estilo que carga tus fuentes (fonts.css)
+        if (sheet.href && sheet.href.includes("fonts.css")) {
+          for (const rule of sheet.cssRules) {
+            // Si la regla es un @font-face, la añadimos a nuestro string de CSS
+            if (rule.type === CSSRule.FONT_FACE_RULE) {
+              css += rule.cssText;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("No se pudo leer una hoja de estilos (CORS):", e);
+      }
+    }
+    return css;
+  }
+
+  // Ahora, reemplaza tu función setupDownloadButton con esta
   function setupDownloadButton() {
     const downloadButton = document.getElementById("download-button");
     const leaderboardButton = document.getElementById("leaderboard-button");
@@ -396,81 +419,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
     downloadButton.addEventListener("click", () => {
       if (typeof gtag === "function") {
-        gtag("event", "download_score", {
-          score: currentScore,
-        });
+        gtag("event", "download_score", { score: currentScore });
       }
       downloadButton.style.display = "none";
       leaderboardButton.style.display = "none";
 
+      // Preparamos los recursos como antes
       const fontsReadyPromise = document.fonts.ready;
       const images = invoiceElement.querySelectorAll("img");
       const imagesLoadedPromises = [...images].map((img) => {
         return new Promise((resolve) => {
-          if (img.complete) {
-            resolve();
-          } else {
+          if (img.complete) resolve();
+          else {
             img.addEventListener("load", resolve, { once: true });
             img.addEventListener("error", resolve, { once: true });
           }
         });
       });
 
-      Promise.all([fontsReadyPromise, ...imagesLoadedPromises])
-        .then(() => {
-          setTimeout(() => {
-            const scaleFactor = 2;
-            const options = {
-              width: invoiceElement.offsetWidth * scaleFactor,
-              height: invoiceElement.offsetHeight * scaleFactor,
-              style: {
-                transform: "scale(" + scaleFactor + ")",
-                transformOrigin: "top left",
-              },
-              cacheBust: true,
-            };
+      Promise.all([fontsReadyPromise, ...imagesLoadedPromises]).then(() => {
+        // --- INICIO DE LA SOLUCIÓN DEFINITIVA ---
 
-            domtoimage
-              .toSvg(invoiceElement, options)
-              .then((svgDataUrl) => {
-                const img = new Image();
-                img.onload = function () {
-                  const canvas = document.createElement("canvas");
-                  canvas.width = img.width;
-                  canvas.height = img.height;
-                  const ctx = canvas.getContext("2d");
+        // 1. Obtenemos el CSS de nuestras @font-face
+        const fontCss = getFontCss();
 
-                  ctx.drawImage(img, 0, 0);
+        // 2. Creamos la etiqueta <style> que se inyectará en el SVG
+        const style = document.createElement("style");
+        style.appendChild(document.createTextNode(fontCss));
 
-                  const pngDataUrl = canvas.toDataURL("image/png");
-                  const link = document.createElement("a");
-                  link.href = pngDataUrl;
-                  link.download = "puntaje-duelo-de-precios.png";
-                  link.click();
+        const scaleFactor = 2;
+        const options = {
+          width: invoiceElement.offsetWidth * scaleFactor,
+          height: invoiceElement.offsetHeight * scaleFactor,
+          style: {
+            transform: "scale(" + scaleFactor + ")",
+            transformOrigin: "top left",
+          },
+          // 3. (OPCIONAL pero recomendado) Añadimos el <style> a la captura
+          // Esto es una propiedad no documentada pero que puede ayudar
+          // Sin embargo, el método principal es `embedCss`
+        };
 
-                  downloadButton.style.display = "block";
-                  leaderboardButton.style.display = "block";
-                };
-                img.src = svgDataUrl;
-              })
-              .catch((error) => {
-                console.error(
-                  "Oops, algo salió mal durante la captura!",
-                  error
-                );
-                downloadButton.style.display = "block";
-                leaderboardButton.style.display = "block";
-              });
-          }, 500);
-        })
-        .catch((error) => {
-          console.error(
-            "No se pudieron cargar los recursos necesarios para la captura.",
-            error
-          );
-          downloadButton.style.display = "block";
-          leaderboardButton.style.display = "block";
-        });
+        // 4. Usamos toPng con la opción para incrustar el CSS.
+        // Es más directo y fiable que pasar por SVG manualmente.
+        domtoimage
+          .toPng(invoiceElement, {
+            ...options,
+            embedCss: fontCss, // Le pasamos directamente el CSS de las fuentes
+          })
+          .then((pngDataUrl) => {
+            const link = document.createElement("a");
+            link.href = pngDataUrl;
+            link.download = "puntaje-duelo-de-precios.png";
+            link.click();
+
+            downloadButton.style.display = "block";
+            leaderboardButton.style.display = "block";
+          })
+          .catch((error) => {
+            console.error("Oops, algo salió mal durante la captura!", error);
+            downloadButton.style.display = "block";
+            leaderboardButton.style.display = "block";
+          });
+
+        // --- FIN DE LA SOLUCIÓN ---
+      });
     });
   }
 
